@@ -1,0 +1,7 @@
+build
+*.dll
+!allegro_monolith-5.2.dll
+record.log
+Makefile
+.vscode
+run.ps1
