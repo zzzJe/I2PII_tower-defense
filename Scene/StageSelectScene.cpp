@@ -47,7 +47,7 @@ void StageSelectScene::Terminate() {
 	IScene::Terminate();
 }
 void StageSelectScene::BackOnClick(int stage) {
-    Engine::GameEngine::GetInstance().ChangeScene("start");
+    Engine::GameEngine::GetInstance().ChangeScene("start-scene");
 }
 void StageSelectScene::PlayOnClick(int stage) {
     PlayScene* scene = dynamic_cast<PlayScene*>(Engine::GameEngine::GetInstance().GetScene("play"));
@@ -55,5 +55,5 @@ void StageSelectScene::PlayOnClick(int stage) {
     Engine::GameEngine::GetInstance().ChangeScene("play");
 }
 void StageSelectScene::ScoreboardOnClick() {
-    Engine::GameEngine::GetInstance().ChangeScene("scoreboard-scene");
+    Engine::GameEngine::GetInstance().ChangeScene("stage-select/scoreboard");
 }

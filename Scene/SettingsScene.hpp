@@ -10,16 +10,12 @@ private:
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
 public:
     explicit SettingsScene() = default;
-
     void Initialize() override;
-
     void Terminate() override;
-
     void PlayOnClick(int stage);
-
     void BGMSlideOnValueChanged(float value);
-
     void SFXSlideOnValueChanged(float value);
+    void BackOnClick(int stage);
 };
 
 #endif // SettingsScene_HPP

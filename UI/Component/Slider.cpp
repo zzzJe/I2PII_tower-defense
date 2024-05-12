@@ -1,3 +1,4 @@
+#include <allegro5/allegro.h>
 #include <algorithm>
 #include <string>
 
@@ -14,7 +15,10 @@ Slider::Slider(float x, float y, float w, float h) :
 	Anchor = Engine::Point(0.5, 0.5);
 }
 void Slider::Draw() const {
-    // TODO: [HACKATHON-3-BUG] (4/5): Draw the nested components here, so they are displayed correctly
+    // DONE: [HACKATHON-3-BUG] (4/5): Draw the nested components here, so they are displayed correctly
+	this->Bar.Draw();
+	this->End1.Draw();
+	this->End2.Draw();
 	ImageButton::Draw();
 }
 void Slider::SetOnValueChangedCallback(std::function<void(float value)> onValueChangedCallback) {
@@ -22,8 +26,9 @@ void Slider::SetOnValueChangedCallback(std::function<void(float value)> onValueC
 }
 void Slider::SetValue(float value) {
 	if (this->value != value) {
-        // TODO: [HACKATHON-3-BUG] (5/5): Fix the function, so it can set the slider value correctly
-        Position.x = (1 - value) * Bar.Position.x + value * (Bar.Position.x + Bar.Size.x);
+        // DONE: [HACKATHON-3-BUG] (5/5): Fix the function, so it can set the slider value correctly
+        Position.x = Bar.Position.x + value * Bar.Size.x;
+		this->value = value;
 		if (OnValueChangedCallback)
 			OnValueChangedCallback(value);
 	}
