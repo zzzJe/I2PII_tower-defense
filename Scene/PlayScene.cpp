@@ -130,17 +130,7 @@ void PlayScene::Update(float deltaTime) {
 		ticks += deltaTime;
 		if (enemyWaveData.empty()) {
 			if (EnemyGroup->GetObjects().empty()) {
-				// Free resources.
-				// delete TileMapGroup;
-				// delete GroundEffectGroup;
-				// delete DebugIndicatorGroup;
-				// delete TowerGroup;
-				// delete EnemyGroup;
-				// delete BulletGroup;
-				// delete EffectGroup;
-				// delete UIGroup;
-				// delete imgTarget;
-				Engine::GameEngine::GetInstance().ChangeScene("win");
+				Engine::GameEngine::GetInstance().ChangeScene("win-scene");
 			}
 			continue;
 		}
@@ -417,7 +407,7 @@ void PlayScene::UIBtnClicked(int id) {
 bool PlayScene::CheckSpaceValid(int x, int y) {
 	if (x < 0 || x >= MapWidth || y < 0 || y >= MapHeight)
 		return false;
-	auto map00 = mapState[y][x];
+	PlayScene::TileType map00 = mapState[y][x];
 	mapState[y][x] = TILE_OCCUPIED;
 	std::vector<std::vector<int>> map = CalculateBFSDistance();
 	mapState[y][x] = map00;
@@ -451,12 +441,36 @@ std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
 		return map;
 	que.push(Engine::Point(MapWidth - 1, MapHeight - 1));
 	map[MapHeight - 1][MapWidth - 1] = 0;
+	auto outside_the_map = [this] (int x, int y) -> bool {
+		return x < 0
+			|| x >= this->MapWidth
+			|| y < 0
+			|| y >= this->MapHeight;
+	};
 	while (!que.empty()) {
 		Engine::Point p = que.front();
 		que.pop();
 		// TODO: [BFS PathFinding] (1/1): Implement a BFS starting from the most right-bottom block in the map.
 		//               For each step you should assign the corresponding distance to the most right-bottom block.
 		//               mapState[y][x] is TILE_DIRT if it is empty.
+		float direction[4][2] = {
+			{1, 0},
+			{-1, 0},
+			{0, 1},
+			{0, -1}
+		};
+		for (
+			int i = 0, dx = direction[0][0], dy = direction[0][1];
+			i < 4;
+			i++, dx = direction[i][0], dy = direction[i][1]
+		) {
+			int x = p.x + dx;
+			int y = p.y + dy;
+			if (outside_the_map(x, y) || this->mapState[y][x] != TILE_DIRT || map[y][x] != -1)
+				continue;
+			que.push(Engine::Point((float)x, (float)y));
+			map[y][x] = map[p.y][p.x] + 1;
+		}
 	}
 	return map;
 }

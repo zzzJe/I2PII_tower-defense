@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 	game.AddNewScene("stage-select/scoreboard", new ScoreboardScene());
 	game.AddNewScene("play", new PlayScene());
 	game.AddNewScene("lose-scene", new LoseScene());
-	game.AddNewScene("win", new WinScene());
+	game.AddNewScene("win-scene", new WinScene());
 
     // DONE: [HACKATHON-1-SCENE] (4/4): Change the start scene
 	game.Start("start-scene", 60, 1600, 832);

@@ -6,6 +6,7 @@
 #include "UI/Component/Image.hpp"
 #include "UI/Component/ImageButton.hpp"
 #include "UI/Component/Label.hpp"
+#include "UI/Component/TextInput.hpp"
 #include "PlayScene.hpp"
 #include "Engine/Point.hpp"
 #include "WinScene.hpp"
@@ -16,13 +17,16 @@ void WinScene::Initialize() {
 	int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
 	int halfW = w / 2;
 	int halfH = h / 2;
-	AddNewObject(new Engine::Image("win/benjamin-sad.png", halfW, halfH, 0, 0, 0.5, 0.5));
+	AddNewObject(new Engine::Image("win/benjamin-sad.png", halfW * 0.6, halfH, 0, 0, 0.5, 0.5));
 	AddNewObject(new Engine::Label("You Win!", "pirulen.ttf", 48, halfW, halfH / 4 -10, 255, 255, 255, 255, 0.5, 0.5));
 	Engine::ImageButton* btn;
 	btn = new Engine::ImageButton("win/dirt.png", "win/floor.png", halfW - 200, halfH * 7 / 4 - 50, 400, 100);
 	btn->SetOnClickCallback(std::bind(&WinScene::BackOnClick, this, 2));
 	AddNewControlObject(btn);
 	AddNewObject(new Engine::Label("Back", "pirulen.ttf", 48, halfW, halfH * 7 / 4, 0, 0, 0, 255, 0.5, 0.5));
+	Engine::TextInput* input = new Engine::TextInput("name", "pirulen.ttf", halfW * 1.4, halfH, 500, 60, true, 3, 10, 0.5, 0.5, {32, 32, 32, 255}, {1, 1, 1, 1}, {0.5, 0.5, 0.5, 1});
+	AddNewObject(new Engine::Label("Input name:", "pirulen.ttf", 40, halfW * 1.4 - input->GetWidth() / 2, halfH - input->GetFullHeight(), 255, 255, 255, 255, 0, 0));
+	AddNewControlObject(new Engine::TextInput("name", "pirulen.ttf", halfW * 1.4, halfH, 500, 60, true, 3, 10, 0.5, 0.5, {32, 32, 32, 255}, {1, 1, 1, 1}, {0.5, 0.5, 0.5, 1}));
 	bgmId = AudioHelper::PlayAudio("win.wav");
 }
 void WinScene::Terminate() {
@@ -31,8 +35,10 @@ void WinScene::Terminate() {
 }
 void WinScene::Update(float deltaTime) {
 	ticks += deltaTime;
-	if (ticks > 4 && ticks < 100 &&
-		dynamic_cast<PlayScene*>(Engine::GameEngine::GetInstance().GetScene("play"))->MapId == 2) {
+	if (
+		ticks > 4 && ticks < 100
+		&& dynamic_cast<PlayScene*>(Engine::GameEngine::GetInstance().GetScene("play"))->MapId == 2)
+	{
 		ticks = 100;
 		bgmId = AudioHelper::PlayBGM("happy.ogg");
 	}
