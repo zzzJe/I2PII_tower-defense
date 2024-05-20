@@ -47,7 +47,7 @@ void PlayScene::Initialize() {
 	ticks = 0;
 	deathCountDown = -1;
 	lives = 10;
-	money = 150;
+	money = PlayScene::InitialMoney;
 	SpeedMult = 1;
 	// Add groups from bottom to top.
 	AddNewObject(TileMapGroup = new Group());
@@ -260,6 +260,7 @@ void PlayScene::OnKeyDown(int keyCode) {
 					return;
 				++it;
 			}
+			this->maxMoney += 10000;
 			this->EarnMoney(10000);
 			EffectGroup->AddNewObject(new Plane());
 		}
@@ -292,12 +293,18 @@ void PlayScene::Hit() {
 int PlayScene::GetMoney() const {
 	return money;
 }
+int PlayScene::GetMaxMoney() const {
+	return maxMoney;
+}
 void PlayScene::EarnMoney(int money) {
 	this->money += money;
 	UIMoney->Text = std::string("$") + std::to_string(this->money);
 }
+int PlayScene::GetLives() const {
+	return this->lives;
+}
 void PlayScene::ReadMap() {
-	std::string filename = std::string("Resource/map") + std::to_string(MapId) + ".txt";
+	std::string filename = std::string("Resource/maps/") + std::to_string(MapId) + ".map";
 	// Read map file.
 	char c;
 	std::vector<bool> mapData;
@@ -336,14 +343,33 @@ void PlayScene::ReadEnemyWave() {
     // DONE: [HACKATHON-3-BUG] (3/5): There is a bug in these files, which let the game only spawn the first enemy, try to fix it.
     std::string filename = std::string("Resource/enemy") + std::to_string(MapId) + ".txt";
 	// Read enemy file.
-	float type, wait, repeat;
+	int type;
+	float wait, repeat;
+	int maximunMoney = 0;
 	enemyWaveData.clear();
 	std::ifstream fin(filename);
 	while (fin >> type && fin >> wait && fin >> repeat) {
 		for (int i = 0; i < repeat; i++)
 			enemyWaveData.emplace_back(type, wait);
+		switch (type) {
+		case 1:
+			maximunMoney += SoldierEnemy::Reward * repeat;
+			break;
+		case 2:
+			maximunMoney += PlaneEnemy::Reward * repeat;
+			break;
+		case 3:
+			maximunMoney += TankEnemy::Reward * repeat;
+			break;
+        // TODO: [CUSTOM-ENEMY]: You need to modify 'Resource/enemy1.txt', or 'Resource/enemy2.txt' to spawn the 4th enemy.
+        //         The format is "[EnemyId] [TimeDelay] [Repeat]".
+        // TODO: [CUSTOM-ENEMY]: Enable the creation of the enemy.
+		default:
+			continue;
+		}
 	}
 	fin.close();
+	this->maxMoney = maximunMoney + PlayScene::InitialMoney;
 }
 void PlayScene::ConstructUI() {
 	// Background

@@ -29,6 +29,7 @@ private:
 protected:
 	int lives;
 	int money;
+	int maxMoney;
 	int SpeedMult;
 public:
 	static bool DebugMode;
@@ -39,6 +40,7 @@ public:
 	static const Engine::Point SpawnGridPoint;
 	static const Engine::Point EndGridPoint;
 	static const std::vector<int> code;
+	static const int InitialMoney = 150;
 	int MapId;
 	float ticks;
 	float deathCountDown;
@@ -72,7 +74,9 @@ public:
 	void OnKeyDown(int keyCode) override;
 	void Hit();
 	int GetMoney() const;
+	int GetMaxMoney() const;
 	void EarnMoney(int money);
+	int GetLives() const;
 	void ReadMap();
 	void ReadEnemyWave();
 	void ConstructUI();
