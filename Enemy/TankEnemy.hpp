@@ -8,6 +8,7 @@ private:
 	Sprite head;
 	float targetRotation;
 public:
+	static const int Reward = 50;
 	TankEnemy(int x, int y);
 	void Draw() const override;
 	void Update(float deltaTime) override;

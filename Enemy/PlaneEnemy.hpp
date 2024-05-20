@@ -4,6 +4,7 @@
 
 class PlaneEnemy : public Enemy {
 public:
+	static const int Reward = 10;
 	PlaneEnemy(int x, int y);
 };
 #endif // PLANEENEMY_HPP
