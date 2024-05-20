@@ -4,21 +4,26 @@
 #include "TextInput.hpp"
 
 Engine::TextInput::TextInput(
-    const std::string& data, const std::string& font,
+    const std::string& data, const std::string& font, int maxLength,
     float x, float y, float width, float height,
     bool roundCorner, float margin, float borderWidth, float anchorX, float anchorY,
     ALLEGRO_COLOR textColor,
     ALLEGRO_COLOR backgroundColor,
-    ALLEGRO_COLOR borderColor
+    ALLEGRO_COLOR borderColor,
+    ALLEGRO_COLOR invalidColor
 ):
     Label(data, font, height * 0.9, x, y, textColor.r, textColor.g, textColor.b, textColor.a, anchorX, anchorY),
+    MaxLength(maxLength),
     Width(width),
     Height(height),
     Margin(margin),
     BorderWidth(borderWidth),
     RoundCorner(roundCorner),
     BackgroundColor(backgroundColor),
-    BorderColor(borderColor)
+    BorderColor(borderColor),
+    InvalidColor(invalidColor),
+    InvalidDisplay(false),
+    Used(false)
 {}
 
 float Engine::TextInput::GetFullWidth() {
@@ -46,13 +51,16 @@ void Engine::TextInput::Draw() const {
         this->Position.y + this->Height + this->Margin * 2 + this->BorderWidth - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
         this->BackgroundColor
     );
+    const ALLEGRO_COLOR& borderDisplayColor = this->IsInvalidDisplay()
+        ? this->InvalidColor
+        : this->BorderColor;
     if (this->RoundCorner) {
         al_draw_line(
             this->Position.x + this->BorderWidth * .5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->BorderWidth * .5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->Position.x + this->Width + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->BorderWidth * .5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
-            this->BorderColor,
+            borderDisplayColor,
             this->BorderWidth
         );
         al_draw_line(
@@ -60,7 +68,7 @@ void Engine::TextInput::Draw() const {
             this->Position.y + this->BorderWidth * .5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->Position.x + this->Width + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->Height + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
-            this->BorderColor,
+            borderDisplayColor,
             this->BorderWidth
         );
         al_draw_line(
@@ -68,7 +76,7 @@ void Engine::TextInput::Draw() const {
             this->Position.y + this->Height + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->Position.x + this->Width + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->Height + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
-            this->BorderColor,
+            borderDisplayColor,
             this->BorderWidth
         );
         al_draw_line(
@@ -76,32 +84,32 @@ void Engine::TextInput::Draw() const {
             this->Position.y + this->BorderWidth * .5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->Position.x + this->BorderWidth * .5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->Height + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
-            this->BorderColor,
+            borderDisplayColor,
             this->BorderWidth
         );
         al_draw_filled_circle(
             this->Position.x + this->BorderWidth * .5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->BorderWidth * .5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->BorderWidth / 2.,
-            this->BorderColor
+            borderDisplayColor
         );
         al_draw_filled_circle(
             this->Position.x + this->Width + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->BorderWidth * .5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->BorderWidth / 2.,
-            this->BorderColor
+            borderDisplayColor
         );
         al_draw_filled_circle(
             this->Position.x + this->BorderWidth * .5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->Height + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->BorderWidth / 2.,
-            this->BorderColor
+            borderDisplayColor
         );
         al_draw_filled_circle(
             this->Position.x + this->Width + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->Height + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->BorderWidth / 2.,
-            this->BorderColor
+            borderDisplayColor
         );
     } else {
         al_draw_rectangle(
@@ -109,7 +117,7 @@ void Engine::TextInput::Draw() const {
             this->Position.y + this->BorderWidth * .5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
             this->Position.x + this->Width + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
             this->Position.y + this->Height + this->Margin * 2 + this->BorderWidth * 1.5 - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
-            this->BorderColor,
+            borderDisplayColor,
             this->BorderWidth
         );
     }
@@ -196,5 +204,34 @@ void Engine::TextInput::Replace(std::string text) {
 }
 
 void Engine::TextInput::OnKeyDown(int keyCode) {
-    this->Update(keyCode);
+    if (this->Used)
+        return;
+    if (keyCode == ALLEGRO_KEY_BACKSPACE) {
+        this->Backspace();
+        this->InvalidDisplay = this->Text.empty();
+    } else if (this->MaxLength > this->Text.length()) {
+        this->Update(keyCode);
+        this->InvalidDisplay = false;
+    } else {
+        this->InvalidDisplay = true;
+    }
+}
+
+bool Engine::TextInput::IsInvalidContent() const {
+    return this->Text.empty() || this->MaxLength < this->Text.length();
+}
+
+bool Engine::TextInput::IsInvalidDisplay() const {
+    return this->InvalidDisplay;
+}
+
+bool Engine::TextInput::ConsumeSlot() {
+    if (this->Used)
+        return true;
+    this->Used = true;
+    return false;
+}
+
+bool Engine::TextInput::IsConsumedSlot() const {
+    return this->Used;
 }
