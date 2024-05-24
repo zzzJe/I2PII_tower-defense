@@ -90,8 +90,12 @@ add_executable(2024_I2P2_TowerDefense_with_answer
         Scene/WinScene.hpp
         Bullet/HealingBullet.cpp
         Bullet/HealingBullet.hpp
-        Turret/HealingTurrent.cpp
-        Turret/HealingTurrent.hpp
+        Turret/HealingTurret.cpp
+        Turret/HealingTurret.hpp
+        Bullet/FlameBullet.cpp
+        Bullet/FlameBullet.hpp
+        Turret/FlameThrowerTurret.cpp
+        Turret/FlameThrowerTurret.hpp
 
         # DONE: [HACKATHON-1-SCENE] (2/4) Add the new scene source files here
         Scene/StartScene.cpp
