@@ -3,10 +3,10 @@
 
 #include "Turret.hpp"
 
-class HealingTurrent: public Turret {
+class HealingTurret: public Turret {
 public:
 	static const int Price;
-    HealingTurrent(float x, float y);
+    HealingTurret(float x, float y);
 	void CreateBullet() override;
 };
 #endif
