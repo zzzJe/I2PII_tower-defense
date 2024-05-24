@@ -23,6 +23,7 @@
 #include "Engine/Resources.hpp"
 #include "Enemy/SoldierEnemy.hpp"
 #include "Enemy/TankEnemy.hpp"
+#include "Enemy/ArmoredVehicleGreen.hpp"
 #include "Turret/TurretButton.hpp"
 
 bool PlayScene::DebugMode = false;
@@ -150,6 +151,9 @@ void PlayScene::Update(float deltaTime) {
 			break;
 		case 3:
 			EnemyGroup->AddNewObject(enemy = new TankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+			break;
+		case 4:
+			EnemyGroup->AddNewObject(enemy = new ArmoredVehicleGreen(SpawnCoordinate.x, SpawnCoordinate.y));
 			break;
         // TODO: [CUSTOM-ENEMY]: You need to modify 'Resource/enemy1.txt', or 'Resource/enemy2.txt' to spawn the 4th enemy.
         //         The format is "[EnemyId] [TimeDelay] [Repeat]".
@@ -361,6 +365,9 @@ void PlayScene::ReadEnemyWave() {
 		case 3:
 			maximunMoney += TankEnemy::Reward * repeat;
 			break;
+		case 4:
+			maximunMoney += ArmoredVehicleGreen::Reward * repeat;
+			break;
         // TODO: [CUSTOM-ENEMY]: You need to modify 'Resource/enemy1.txt', or 'Resource/enemy2.txt' to spawn the 4th enemy.
         //         The format is "[EnemyId] [TimeDelay] [Repeat]".
         // TODO: [CUSTOM-ENEMY]: Enable the creation of the enemy.
@@ -476,7 +483,7 @@ std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
 	while (!que.empty()) {
 		Engine::Point p = que.front();
 		que.pop();
-		// TODO: [BFS PathFinding] (1/1): Implement a BFS starting from the most right-bottom block in the map.
+		// DONE: [BFS PathFinding] (1/1): Implement a BFS starting from the most right-bottom block in the map.
 		//               For each step you should assign the corresponding distance to the most right-bottom block.
 		//               mapState[y][x] is TILE_DIRT if it is empty.
 		float direction[4][2] = {

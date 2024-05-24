@@ -113,8 +113,8 @@ void Enemy::Update(float deltaTime) {
 			remainSpeed = 0;
 		}
 	}
-	Rotation = atan2(Velocity.y, Velocity.x);
 	Sprite::Update(deltaTime);
+	Rotation = atan2(Velocity.y, Velocity.x);
 }
 void Enemy::Draw() const {
 	Sprite::Draw();

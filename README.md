@@ -24,3 +24,7 @@
 
 <!-- Please describe the bonus optimizations or features you have implemented in the above table. -->
 
+## TODO
+- Add a Table component that accept a vector of components
+    - auto distribute margin left between the columns and rows
+    - highly abstract table like something in HTML parser
