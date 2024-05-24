@@ -17,6 +17,7 @@
 #include "Turret/LaserTurret.hpp"
 #include "Turret/MachineGunTurret.hpp"
 #include "Turret/MissileTurret.hpp"
+#include "Turret/HealingTurrent.hpp"
 #include "UI/Animation/Plane.hpp"
 #include "Enemy/PlaneEnemy.hpp"
 #include "PlayScene.hpp"
@@ -281,6 +282,10 @@ void PlayScene::OnKeyDown(int keyCode) {
 		// Hotkey for MissileTurret.
 		UIBtnClicked(2);
 	}
+	else if (keyCode == ALLEGRO_KEY_R) {
+		// Hotkey for HealingTurret.
+		UIBtnClicked(3);
+	}
 	// TODO: [CUSTOM-TURRET]: Make specific key to create the turret.
 	else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
 		// Hotkey for Speed up.
@@ -408,6 +413,13 @@ void PlayScene::ConstructUI() {
 		, 1446, 136, MissileTurret::Price);
 	btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 2));
 	UIGroup->AddNewControlObject(btn);
+	// Button 4
+	btn = new TurretButton("play/floor.png", "play/dirt.png",
+		Engine::Sprite("play/tower-base.png", 1522, 136, 0, 0, 0, 0),
+		Engine::Sprite("play/turret-8.png", 1522, 136 - 8, 0, 0, 0, 0)
+		, 1522, 136, HealingTurrent::Price);
+	btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 3));
+	UIGroup->AddNewControlObject(btn);
 	// TODO: [CUSTOM-TURRET]: Create a button to support constructing the turret.
 	int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
 	int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
@@ -418,8 +430,10 @@ void PlayScene::ConstructUI() {
 }
 
 void PlayScene::UIBtnClicked(int id) {
-	if (preview)
+	if (preview) {
 		UIGroup->RemoveObject(preview->GetObjectIterator());
+		preview = nullptr;
+	}
     // TODO: [CUSTOM-TURRET]: On callback, create the turret.
 	if (id == 0 && money >= MachineGunTurret::Price)
 		preview = new MachineGunTurret(0, 0);
@@ -427,6 +441,8 @@ void PlayScene::UIBtnClicked(int id) {
 		preview = new LaserTurret(0, 0);
 	else if (id == 2 && money >= MissileTurret::Price)
 		preview = new MissileTurret(0, 0);
+	else if (id == 3 && money >= HealingTurrent::Price)
+		preview = new HealingTurrent(0, 0);
 	if (!preview)
 		return;
 	preview->Position = Engine::GameEngine::GetInstance().GetMousePosition();

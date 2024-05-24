@@ -85,7 +85,7 @@ void WinScene::SaveOnClick(const int mapId, Engine::TextInput* inputSlot, const 
 			break;
 		playerDataList.push_back(std::tuple<std::string, std::string, std::string>(name, score, date));
 	}
-	int userScore = lives * 300 + (int)((double)money / (double)maxMoney * 2000);
+	int userScore = lives * 500 + (int)money;
 	auto getFormattedTime = [] () -> std::string {
 		auto nowTime = std::chrono::system_clock::now();
 		std::time_t cStyleNowTime = std::chrono::system_clock::to_time_t(nowTime);
