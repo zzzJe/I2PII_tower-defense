@@ -96,6 +96,10 @@ add_executable(2024_I2P2_TowerDefense_with_answer
         Bullet/FlameBullet.hpp
         Turret/FlameThrowerTurret.cpp
         Turret/FlameThrowerTurret.hpp
+        Tool/Tool.cpp
+        Tool/Tool.hpp
+        Tool/Shovel.cpp
+        Tool/Shovel.hpp
 
         # DONE: [HACKATHON-1-SCENE] (2/4) Add the new scene source files here
         Scene/StartScene.cpp

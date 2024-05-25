@@ -19,6 +19,7 @@
 #include "Turret/MissileTurret.hpp"
 #include "Turret/HealingTurret.hpp"
 #include "Turret/FlameThrowerTurret.hpp"
+#include "Tool/Shovel.hpp"
 #include "UI/Animation/Plane.hpp"
 #include "Enemy/PlaneEnemy.hpp"
 #include "PlayScene.hpp"
@@ -45,7 +46,6 @@ void PlayScene::Initialize() {
 	// DONE: [HACKATHON-3-BUG] (1/5): There's a bug in this file, which crashes the game when you lose. Try to find it.
 	// DONE: [HACKATHON-3-BUG] (2/5): Find out the cheat code to test.
     // DONE: [HACKATHON-3-BUG] (2/5): It should generate a Plane, and add 10000 to the money, but it doesn't work now.
-	mapState.clear();
 	keyStrokes.clear();
 	ticks = 0;
 	deathCountDown = -1;
@@ -62,9 +62,8 @@ void PlayScene::Initialize() {
 	AddNewObject(EffectGroup = new Group());
 	// Should support buttons.
 	AddNewControlObject(UIGroup = new Group());
-	ReadMap();
+	InitializeMapAssociatedStates();
 	ReadEnemyWave();
-	mapDistance = CalculateBFSDistance();
 	ConstructUI();
 	imgTarget = new Engine::Image("play/target.png", 0, 0);
 	imgTarget->Visible = false;
@@ -176,18 +175,150 @@ void PlayScene::Update(float deltaTime) {
 void PlayScene::Draw() const {
 	IScene::Draw();
 	if (DebugMode) {
-		// Draw reverse BFS distance on all reachable blocks.
 		for (int i = 0; i < MapHeight; i++) {
 			for (int j = 0; j < MapWidth; j++) {
-				if (mapDistance[i][j] != -1) {
-					// Not elegant nor efficient, but it's quite enough for debugging.
-					Engine::Label label(std::to_string(mapDistance[i][j]), "pirulen.ttf", 32, (j + 0.5) * BlockSize, (i + 0.5) * BlockSize);
-					label.Anchor = Engine::Point(0.5, 0.5);
+				{
+					// Draw reverse BFS distance on all reachable blocks.
+					if (mapDistance[i][j] != -1) {
+						// Not elegant nor efficient, but it's quite enough for debugging.
+						Engine::Label label(std::to_string(mapDistance[i][j]), "pirulen.ttf", 28, (j + 0.5) * BlockSize, (i + 0.4) * BlockSize);
+						label.Anchor = Engine::Point(0.5, 0.5);
+						label.Draw();
+					}
+				} {
+					// Draw economic value on all blocks.
+					Engine::Label label(std::to_string(economyMap[i][j]), "pirulen.ttf", 16, (j + 1) * BlockSize, (i + 0.85) * BlockSize, 0, 128, 0);
+					label.Anchor = Engine::Point(1, 0.5);
+					label.Draw();
+				} {
+					// Draw turret price on all blocks.
+					Engine::Label label(std::to_string(turretPriceState[i][j]), "pirulen.ttf", 16, (j + 1) * BlockSize, (i + 0.65) * BlockSize, 128, 0, 0);
+					label.Anchor = Engine::Point(1, 0.5);
 					label.Draw();
 				}
 			}
 		}
 	}
+}
+void PlayScene::TryAddOneTurret(int x, int y) {
+	if (!preview)
+		return;
+	// Check if is specific tool.
+	// Check if valid.
+	if (dynamic_cast<ShovelTool*>(preview) || !CheckSpaceValid(x, y)) {
+		Engine::Sprite* sprite;
+		GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
+		sprite->Rotation = 0;
+		return;
+	}
+	// Purchase.
+	EarnMoney(-preview->GetPrice());
+	// Remove Preview.
+	preview->GetObjectIterator()->first = false;
+	UIGroup->RemoveObject(preview->GetObjectIterator());
+	// Construct real turret.
+	preview->Position.x = x * BlockSize + BlockSize / 2;
+	preview->Position.y = y * BlockSize + BlockSize / 2;
+	preview->Enabled = true;
+	preview->Preview = false;
+	preview->Tint = al_map_rgba(255, 255, 255, 255);
+	TowerGroup->AddNewObject(preview);
+	// Update turretPriceState
+	turretPriceState[y][x] = preview->GetPrice();
+	// Update economyMap
+	economyMap[y][x] = -1;
+	auto outOfBound = [] (int x, int y) -> bool {
+		return x < 0
+			|| x >= MapWidth
+			|| y < 0
+			|| y >= MapHeight;
+	};
+	const std::pair<int, int> directions[8] = {
+		std::make_pair(0, 1),
+		std::make_pair(1, 1),
+		std::make_pair(1, 0),
+		std::make_pair(1, -1),
+		std::make_pair(0, -1),
+		std::make_pair(-1, -1),
+		std::make_pair(-1, 0),
+		std::make_pair(-1, 1),
+	};
+	for (auto direction : directions) {
+		const int updateX = x + direction.first;
+		const int updateY = y + direction.second;
+		if (outOfBound(updateX, updateY))
+			continue;
+		if (economyMap[updateY][updateX] == -1)
+			continue;
+		economyMap[updateY][updateX] += preview->GetPrice();
+	}
+	// To keep responding when paused.
+	preview->Update(0);
+	// Remove Preview.
+	preview = nullptr;
+
+	mapState[y][x] = TILE_OCCUPIED;
+}
+void PlayScene::TryRemoveOneTurret(int x, int y) {
+	if (!preview)
+		return;
+	// Check if is specific tool.
+	// Check if is shovel-valid.
+	if (!dynamic_cast<ShovelTool*>(preview) || mapState[y][x] != TILE_OCCUPIED) {
+		Engine::Sprite* sprite;
+		GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
+		sprite->Rotation = 0;
+		return;
+	}
+	// Return money
+	EarnMoney(turretPriceState[y][x] / 2);
+	// Remove Preview.
+	preview->GetObjectIterator()->first = false;
+	UIGroup->RemoveObject(preview->GetObjectIterator());
+	// Remove turret from group
+	for (auto& tower : TowerGroup->GetObjects()) {
+		if (tower->Position == Engine::Point(x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2)) {
+			TowerGroup->RemoveObject(tower->GetObjectIterator());
+			break;
+		}
+	}
+	mapState[y][x] = originalMapState[y][x];
+	mapDistance = CalculateBFSDistance();
+	// Update economyMap
+	auto outOfBound = [] (int x, int y) -> bool {
+		return x < 0
+			|| x >= MapWidth
+			|| y < 0
+			|| y >= MapHeight;
+	};
+	const std::pair<int, int> directions[8] = {
+		std::make_pair(0, 1),
+		std::make_pair(1, 1),
+		std::make_pair(1, 0),
+		std::make_pair(1, -1),
+		std::make_pair(0, -1),
+		std::make_pair(-1, -1),
+		std::make_pair(-1, 0),
+		std::make_pair(-1, 1),
+	};
+	if (mapDistance[y][x] != -1)
+		economyMap[y][x] = 0;
+	for (auto direction : directions) {
+		const int updateX = x + direction.first;
+		const int updateY = y + direction.second;
+		if (outOfBound(updateX, updateY))
+			continue;
+		if (economyMap[updateY][updateX] != -1)
+			economyMap[updateY][updateX] -= turretPriceState[y][x];
+		if (mapDistance[y][x] != -1)
+			economyMap[y][x] += turretPriceState[updateY][updateX];
+	}
+	// Update turretPriceState
+	turretPriceState[y][x] = 0;
+	// To keep responding when paused
+	preview->Update(0);
+	// Remove Preview.
+	preview = nullptr;
 }
 void PlayScene::OnMouseDown(int button, int mx, int my) {
 	if ((button & 1) && !imgTarget->Visible && preview) {
@@ -217,33 +348,10 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
 	const int y = my / BlockSize;
 	if (button & 1) {
 		if (mapState[y][x] != TILE_OCCUPIED) {
-			if (!preview)
-				return;
-			// Check if valid.
-			if (!CheckSpaceValid(x, y)) {
-				Engine::Sprite* sprite;
-				GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
-				sprite->Rotation = 0;
-				return;
-			}
-			// Purchase.
-			EarnMoney(-preview->GetPrice());
-			// Remove Preview.
-			preview->GetObjectIterator()->first = false;
-			UIGroup->RemoveObject(preview->GetObjectIterator());
-			// Construct real turret.
-			preview->Position.x = x * BlockSize + BlockSize / 2;
-			preview->Position.y = y * BlockSize + BlockSize / 2;
-			preview->Enabled = true;
-			preview->Preview = false;
-			preview->Tint = al_map_rgba(255, 255, 255, 255);
-			TowerGroup->AddNewObject(preview);
-			// To keep responding when paused.
-			preview->Update(0);
-			// Remove Preview.
-			preview = nullptr;
-
-			mapState[y][x] = TILE_OCCUPIED;
+			TryAddOneTurret(x, y);
+			OnMouseMove(mx, my);
+		} else {
+			TryRemoveOneTurret(x, y);
 			OnMouseMove(mx, my);
 		}
 	}
@@ -288,8 +396,12 @@ void PlayScene::OnKeyDown(int keyCode) {
 		UIBtnClicked(3);
 	}
 	else if (keyCode == ALLEGRO_KEY_T) {
-		// Hotkey for HealingTurret.
+		// Hotkey for FlameThrowerTurret.
 		UIBtnClicked(4);
+	}
+	else if (keyCode == ALLEGRO_KEY_X) {
+		// Hotkey for ShovelTool.
+		UIBtnClicked(5);
 	}
 	// TODO: [CUSTOM-TURRET]: Make specific key to create the turret.
 	else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
@@ -341,16 +453,30 @@ void PlayScene::ReadMap() {
 		throw std::ios_base::failure("Map data is corrupted.");
 	// Store map in 2d array.
 	mapState = std::vector<std::vector<TileType>>(MapHeight, std::vector<TileType>(MapWidth));
+	originalMapState = std::vector<std::vector<TileType>>(MapHeight, std::vector<TileType>(MapWidth));
 	for (int i = 0; i < MapHeight; i++) {
 		for (int j = 0; j < MapWidth; j++) {
 			const int num = mapData[i * MapWidth + j];
 			mapState[i][j] = num ? TILE_FLOOR : TILE_DIRT;
+			originalMapState[i][j] = num ? TILE_FLOOR : TILE_DIRT;
 			if (num)
 				TileMapGroup->AddNewObject(new Engine::Image("play/floor.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
 			else
 				TileMapGroup->AddNewObject(new Engine::Image("play/dirt.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
 		}
 	}
+}
+void PlayScene::InitializeMapAssociatedStates() {
+	mapState.clear();
+	ReadMap();
+	// Initialize economyMap
+	economyMap = std::vector<std::vector<int>>(MapHeight, std::vector<int>(MapWidth));
+	mapDistance = CalculateBFSDistance();
+	for (int i = 0; i < mapDistance.size(); i++)
+		for (int j = 0; j < mapDistance[i].size(); j++)
+			economyMap[i][j] = std::min(mapDistance[i][j], 0);
+	// Initialize turrentState
+	turretPriceState = std::vector<std::vector<int>>(MapHeight, std::vector<int>(MapWidth, 0));
 }
 void PlayScene::ReadEnemyWave() {
     // DONE: [HACKATHON-3-BUG] (3/5): Trace the code to know how the enemies are created.
@@ -432,6 +558,13 @@ void PlayScene::ConstructUI() {
 		, 1294, 212, FlameThrowerTurret::Price);
 	btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 4));
 	UIGroup->AddNewControlObject(btn);
+	// Button 6
+	btn = new TurretButton("play/floor.png", "play/dirt.png",
+		Engine::Sprite("play/tool-base.png", 1294, 288, 0, 0, 0, 0),
+		Engine::Sprite("play/shovel.png", 1294 + 32, 288 + 32, 0, 0, .5, .5, ALLEGRO_PI / 4)
+		, 1294, 288, ShovelTool::Price);
+	btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 5));
+	UIGroup->AddNewControlObject(btn);
 	// TODO: [CUSTOM-TURRET]: Create a button to support constructing the turret.
 	int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
 	int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
@@ -457,6 +590,8 @@ void PlayScene::UIBtnClicked(int id) {
 		preview = new HealingTurret(0, 0);
 	else if (id == 4 && money >= FlameThrowerTurret::Price)
 		preview = new FlameThrowerTurret(0, 0);
+	else if (id == 5 && money >= ShovelTool::Price)
+		preview = new ShovelTool(0, 0);
 	if (!preview)
 		return;
 	preview->Position = Engine::GameEngine::GetInstance().GetMousePosition();

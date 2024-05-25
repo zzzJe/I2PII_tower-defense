@@ -24,6 +24,14 @@ private:
 		TILE_FLOOR,
 		TILE_OCCUPIED,
 	};
+	enum TurretType {
+		TURRET_NIL = -1,
+		TURRET_MACHINEGUN,
+		TURRET_LASER,
+		TURRET_MISSILE,
+		TURRET_HEALING,
+		TURRET_FLAMETHROWER,
+	};
 	ALLEGRO_SAMPLE_ID bgmId;
 	std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
 protected:
@@ -59,7 +67,10 @@ public:
 	Engine::Sprite* dangerIndicator;
 	Turret* preview;
 	std::vector<std::vector<TileType>> mapState;
+	std::vector<std::vector<TileType>> originalMapState;
 	std::vector<std::vector<int>> mapDistance;
+	std::vector<std::vector<int>> turretPriceState;
+	std::vector<std::vector<int>> economyMap;
 	std::list<std::pair<int, float>> enemyWaveData;
 	std::list<int> keyStrokes;
 	static Engine::Point GetClientSize();
@@ -82,6 +93,9 @@ public:
 	void ConstructUI();
 	void UIBtnClicked(int id);
 	bool CheckSpaceValid(int x, int y);
+	void InitializeMapAssociatedStates();
+	void TryAddOneTurret(int x, int y);
+	void TryRemoveOneTurret(int x, int y);
 	std::vector<std::vector<int>> CalculateBFSDistance();
 	// void ModifyReadMapTiles();
 };
