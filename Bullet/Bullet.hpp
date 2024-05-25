@@ -22,5 +22,6 @@ public:
 	Enemy* Target = nullptr;
 	explicit Bullet(std::string img, float speed, float damage, Engine::Point position, Engine::Point forwardDirection, float rotation, Turret* parent);
 	void Update(float deltaTime) override;
+	Turret* GetParent();
 };
 #endif // BULLET_HPP
