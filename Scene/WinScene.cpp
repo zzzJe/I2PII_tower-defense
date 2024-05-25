@@ -87,11 +87,10 @@ void WinScene::SaveOnClick(const int mapId, Engine::TextInput* inputSlot, const 
 	}
 	int userScore = lives * 500 + (int)money;
 	auto getFormattedTime = [] () -> std::string {
-		auto nowTime = std::chrono::system_clock::now();
-		std::time_t cStyleNowTime = std::chrono::system_clock::to_time_t(nowTime);
-		std::tm nowTm = *std::gmtime(&cStyleNowTime);
+		auto t = std::time(nullptr);
+    	auto tm = *std::localtime(&t);
 		std::ostringstream oss;
-		oss << std::put_time(&nowTm, "%Y-%m-%d %H:%M:%S");
+		oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
 		return oss.str();
 	};
 	auto insert_at = std::find_if(playerDataList.cbegin(), playerDataList.cend(), [=] (auto t) {
