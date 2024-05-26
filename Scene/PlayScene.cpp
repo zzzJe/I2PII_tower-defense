@@ -27,6 +27,7 @@
 #include "Enemy/SoldierEnemy.hpp"
 #include "Enemy/TankEnemy.hpp"
 #include "Enemy/ArmoredVehicleGreen.hpp"
+#include "Enemy/CreeperEnemy.hpp"
 #include "Turret/TurretButton.hpp"
 
 bool PlayScene::DebugMode = false;
@@ -156,6 +157,9 @@ void PlayScene::Update(float deltaTime) {
 		case 4:
 			EnemyGroup->AddNewObject(enemy = new ArmoredVehicleGreen(SpawnCoordinate.x, SpawnCoordinate.y));
 			break;
+		case 5:
+			EnemyGroup->AddNewObject(enemy = new CreeperEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+			break;
         // TODO: [CUSTOM-ENEMY]: You need to modify 'Resource/enemy1.txt', or 'Resource/enemy2.txt' to spawn the 4th enemy.
         //         The format is "[EnemyId] [TimeDelay] [Repeat]".
         // TODO: [CUSTOM-ENEMY]: Enable the creation of the enemy.
@@ -200,125 +204,101 @@ void PlayScene::Draw() const {
 		}
 	}
 }
-void PlayScene::TryAddOneTurret(int x, int y) {
-	if (!preview)
-		return;
-	// Check if is specific tool.
-	// Check if valid.
-	if (dynamic_cast<ShovelTool*>(preview) || !CheckSpaceValid(x, y)) {
-		Engine::Sprite* sprite;
-		GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
-		sprite->Rotation = 0;
-		return;
-	}
-	// Purchase.
-	EarnMoney(-preview->GetPrice());
-	// Remove Preview.
-	preview->GetObjectIterator()->first = false;
-	UIGroup->RemoveObject(preview->GetObjectIterator());
-	// Construct real turret.
-	preview->Position.x = x * BlockSize + BlockSize / 2;
-	preview->Position.y = y * BlockSize + BlockSize / 2;
-	preview->Enabled = true;
-	preview->Preview = false;
-	preview->Tint = al_map_rgba(255, 255, 255, 255);
-	TowerGroup->AddNewObject(preview);
+bool PlayScene::TryAddOneTurret(Engine::Point p, Turret* t) {
+	if (mapState[p.y][p.x] == TILE_OCCUPIED)
+		return false;
+	// Purchase
+	EarnMoney(-t->GetPrice());
+	// Add turret to group
+	TowerGroup->AddNewObject(t);
 	// Update turretPriceState
-	turretPriceState[y][x] = preview->GetPrice();
+	turretPriceState[p.y][p.x] = t->GetPrice();
 	// Update economyMap
-	economyMap[y][x] = -1;
-	auto outOfBound = [] (int x, int y) -> bool {
-		return x < 0
-			|| x >= MapWidth
-			|| y < 0
-			|| y >= MapHeight;
+	economyMap[p.y][p.x] = -1;
+	auto outOfBound = [] (Engine::Point p) -> bool {
+		return p.x < 0
+			|| p.x >= MapWidth
+			|| p.y < 0
+			|| p.y >= MapHeight;
 	};
-	const std::pair<int, int> directions[8] = {
-		std::make_pair(0, 1),
-		std::make_pair(1, 1),
-		std::make_pair(1, 0),
-		std::make_pair(1, -1),
-		std::make_pair(0, -1),
-		std::make_pair(-1, -1),
-		std::make_pair(-1, 0),
-		std::make_pair(-1, 1),
+	const Engine::Point directions[8] = {
+		Engine::Point(0, 1),
+		Engine::Point(1, 1),
+		Engine::Point(1, 0),
+		Engine::Point(1, -1),
+		Engine::Point(0, -1),
+		Engine::Point(-1, -1),
+		Engine::Point(-1, 0),
+		Engine::Point(-1, 1),
 	};
 	for (auto direction : directions) {
-		const int updateX = x + direction.first;
-		const int updateY = y + direction.second;
-		if (outOfBound(updateX, updateY))
+		const Engine::Point updatePoint = p + direction;
+		if (outOfBound(updatePoint))
 			continue;
-		if (economyMap[updateY][updateX] == -1)
+		if (economyMap[updatePoint.y][updatePoint.x] == -1)
 			continue;
-		economyMap[updateY][updateX] += preview->GetPrice();
+		economyMap[updatePoint.y][updatePoint.x] += t->GetPrice();
 	}
-	// To keep responding when paused.
-	preview->Update(0);
-	// Remove Preview.
-	preview = nullptr;
-
-	mapState[y][x] = TILE_OCCUPIED;
+	mapState[p.y][p.x] = TILE_OCCUPIED;
+	// TODO:
+	// After the current turret is placed, we should use BFS to iterate 'should hollow' block
+	// 'should hollow' block is a block that is to be inside a wall of turrets
+	// after appropriate mapDistance update, the 'should hollow' block should have
+	//  1. mapDistance == -1
+	//  2. economyMap != -1
+	//  ?. BFS should be enough for possible case...?
+	return true;
 }
-void PlayScene::TryRemoveOneTurret(int x, int y) {
-	if (!preview)
-		return;
-	// Check if is specific tool.
-	// Check if is shovel-valid.
-	if (!dynamic_cast<ShovelTool*>(preview) || mapState[y][x] != TILE_OCCUPIED) {
-		Engine::Sprite* sprite;
-		GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
-		sprite->Rotation = 0;
-		return;
-	}
-	// Return money
-	EarnMoney(turretPriceState[y][x] / 2);
-	// Remove Preview.
-	preview->GetObjectIterator()->first = false;
-	UIGroup->RemoveObject(preview->GetObjectIterator());
+bool PlayScene::TryRemoveOneTurret(Engine::Point p) {
+	if (mapState[p.y][p.x] != TILE_OCCUPIED)
+		return false;
 	// Remove turret from group
 	for (auto& tower : TowerGroup->GetObjects()) {
-		if (tower->Position == Engine::Point(x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2)) {
+		if (tower->Position == p * BlockSize + Engine::Point(BlockSize, BlockSize) / 2) {
 			TowerGroup->RemoveObject(tower->GetObjectIterator());
 			break;
 		}
 	}
-	mapState[y][x] = originalMapState[y][x];
+	mapState[p.y][p.x] = originalMapState[p.y][p.x];
 	mapDistance = CalculateBFSDistance();
 	// Update economyMap
-	auto outOfBound = [] (int x, int y) -> bool {
-		return x < 0
-			|| x >= MapWidth
-			|| y < 0
-			|| y >= MapHeight;
+	auto outOfBound = [] (Engine::Point p) -> bool {
+		return p.x < 0
+			|| p.x >= MapWidth
+			|| p.y < 0
+			|| p.y >= MapHeight;
 	};
-	const std::pair<int, int> directions[8] = {
-		std::make_pair(0, 1),
-		std::make_pair(1, 1),
-		std::make_pair(1, 0),
-		std::make_pair(1, -1),
-		std::make_pair(0, -1),
-		std::make_pair(-1, -1),
-		std::make_pair(-1, 0),
-		std::make_pair(-1, 1),
+	const Engine::Point directions[8] = {
+		Engine::Point(0, 1),
+		Engine::Point(1, 1),
+		Engine::Point(1, 0),
+		Engine::Point(1, -1),
+		Engine::Point(0, -1),
+		Engine::Point(-1, -1),
+		Engine::Point(-1, 0),
+		Engine::Point(-1, 1),
 	};
-	if (mapDistance[y][x] != -1)
-		economyMap[y][x] = 0;
+	if (mapDistance[p.y][p.x] != -1)
+		economyMap[p.y][p.x] = 0;
 	for (auto direction : directions) {
-		const int updateX = x + direction.first;
-		const int updateY = y + direction.second;
-		if (outOfBound(updateX, updateY))
+		const Engine::Point updatePoint = p + direction;
+		if (outOfBound(updatePoint))
 			continue;
-		if (economyMap[updateY][updateX] != -1)
-			economyMap[updateY][updateX] -= turretPriceState[y][x];
-		if (mapDistance[y][x] != -1)
-			economyMap[y][x] += turretPriceState[updateY][updateX];
+		if (economyMap[updatePoint.y][updatePoint.x] != -1)
+			economyMap[updatePoint.y][updatePoint.x] -= turretPriceState[p.y][p.x];
+		if (mapDistance[p.y][p.x] != -1)
+			economyMap[p.y][p.x] += turretPriceState[updatePoint.y][updatePoint.x];
 	}
 	// Update turretPriceState
-	turretPriceState[y][x] = 0;
-	// To keep responding when paused
-	preview->Update(0);
-	// Remove Preview.
-	preview = nullptr;
+	turretPriceState[p.y][p.x] = 0;
+	// TODO:
+	// After the current turret is removed, we should use BFS to iterate 'hollow' block
+	// 'hollow' block is a block that is originally inside a wall of turrets
+	// after appropriate mapDistance update, the 'hollow' block should have
+	//  1. mapDistance != -1
+	//  2. economyMap == -1
+	//  ?. BFS should be enough for possible case...?
+	return true;
 }
 void PlayScene::OnMouseDown(int button, int mx, int my) {
 	if ((button & 1) && !imgTarget->Visible && preview) {
@@ -348,10 +328,53 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
 	const int y = my / BlockSize;
 	if (button & 1) {
 		if (mapState[y][x] != TILE_OCCUPIED) {
-			TryAddOneTurret(x, y);
+			if (!preview)
+				return;
+			// Check if is specific tool
+			// Check if valid
+			if (dynamic_cast<ShovelTool*>(preview) || !CheckSpaceValid(x, y)) {
+				Engine::Sprite* sprite;
+				GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
+				sprite->Rotation = 0;
+				return;
+			}
+			// Remove Preview
+			preview->GetObjectIterator()->first = false;
+			UIGroup->RemoveObject(preview->GetObjectIterator());
+			// Construct real turret
+			preview->Position.x = x * BlockSize + BlockSize / 2;
+			preview->Position.y = y * BlockSize + BlockSize / 2;
+			preview->Enabled = true;
+			preview->Preview = false;
+			preview->Tint = al_map_rgba(255, 255, 255, 255);
+			mapState[y][x] = originalMapState[y][x];
+			TryAddOneTurret(Engine::Point(x, y), preview);
+			// To keep responding when paused
+			preview->Update(0);
+			// Remove Preview
+			preview = nullptr;
 			OnMouseMove(mx, my);
 		} else {
-			TryRemoveOneTurret(x, y);
+			if (!preview)
+				return;
+			// Check if is specific tool
+			// Check if is shovel-valid
+			if (!dynamic_cast<ShovelTool*>(preview)) {
+				Engine::Sprite* sprite;
+				GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
+				sprite->Rotation = 0;
+				return;
+			}
+			// Return money
+			EarnMoney(turretPriceState[y][x] / 2);
+			// Remove Preview
+			preview->GetObjectIterator()->first = false;
+			UIGroup->RemoveObject(preview->GetObjectIterator());
+			TryRemoveOneTurret(Engine::Point(x, y));
+			// To keep responding when paused
+			preview->Update(0);
+			// Remove Preview
+			preview = nullptr;
 			OnMouseMove(mx, my);
 		}
 	}
@@ -503,6 +526,9 @@ void PlayScene::ReadEnemyWave() {
 			break;
 		case 4:
 			maximunMoney += ArmoredVehicleGreen::Reward * repeat;
+			break;
+		case 5:
+			maximunMoney += CreeperEnemy::Reward * repeat;
 			break;
         // TODO: [CUSTOM-ENEMY]: You need to modify 'Resource/enemy1.txt', or 'Resource/enemy2.txt' to spawn the 4th enemy.
         //         The format is "[EnemyId] [TimeDelay] [Repeat]".

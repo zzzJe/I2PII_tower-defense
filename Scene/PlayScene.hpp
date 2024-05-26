@@ -48,7 +48,7 @@ public:
 	static const Engine::Point SpawnGridPoint;
 	static const Engine::Point EndGridPoint;
 	static const std::vector<int> code;
-	static const int InitialMoney = 150;
+	static const int InitialMoney = 500;
 	int MapId;
 	float ticks;
 	float deathCountDown;
@@ -94,8 +94,8 @@ public:
 	void UIBtnClicked(int id);
 	bool CheckSpaceValid(int x, int y);
 	void InitializeMapAssociatedStates();
-	void TryAddOneTurret(int x, int y);
-	void TryRemoveOneTurret(int x, int y);
+	bool TryAddOneTurret(Engine::Point p, Turret* t);
+	bool TryRemoveOneTurret(Engine::Point p);
 	std::vector<std::vector<int>> CalculateBFSDistance();
 	// void ModifyReadMapTiles();
 };
