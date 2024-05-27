@@ -149,6 +149,7 @@ namespace Engine {
 		/// </summary>
 		/// <returns>Returns whether key is down or not.</returns>
 		bool IsKeyDown(int keyCode) const;
+		int GetFps() const;
 		/// <summary>
 		/// Typical function to retrieve Singleton instance and supports lazy initialization.
 		/// </summary>

@@ -261,6 +261,9 @@ namespace Engine {
 		al_get_keyboard_state(&state);
 		return al_key_down(&state, keyCode);
 	}
+	int GameEngine::GetFps() const {
+		return fps;
+	}
 	GameEngine& GameEngine::GetInstance() {
 		// The classic way to lazy initialize a Singleton.
 		static GameEngine instance;
