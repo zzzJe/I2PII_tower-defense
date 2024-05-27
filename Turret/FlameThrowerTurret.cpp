@@ -26,17 +26,10 @@ void FlameThrowerTurret::CreateBullet() {
 	float rotation = atan2(diff.y, diff.x);
 	Engine::Point normalized = diff.Normalize();
 	// Change bullet position to the front of the gun barrel.
-	getPlayScene()->BulletGroup->AddNewObject(new FlameBullet(Position + normalized * 45, diff, rotation, this));
+	getPlayScene()->BulletGroup->AddNewObject(new FlameBullet(Position + normalized * 45, diff, rotation, this, 0));
 	// AudioHelper::PlayAudio("gun.wav");
 }
 void FlameThrowerTurret::Update(float deltaTime) {
-	Engine::Group* bullets = getPlayScene()->BulletGroup;
-	for (auto uncastedBullet : bullets->GetObjects()) {
-		Bullet* bullet = dynamic_cast<Bullet*>(uncastedBullet);
-		if (bullet->GetParent() == this) {
-			this->getPlayScene()->BulletGroup->RemoveObject(bullet->GetObjectIterator());
-		}
-	}
 	Turret::Update(deltaTime);
 	Engine::Point diff = Engine::Point(cos(Rotation - ALLEGRO_PI / 2), sin(Rotation - ALLEGRO_PI / 2));
 	Engine::Point normalized = diff.Normalize();
