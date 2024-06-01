@@ -12,41 +12,41 @@ CreeperEnemy::CreeperEnemy(int x, int y):
 
 void CreeperEnemy::OnExplode() {
     // Remove range 3x3 turrets
-	auto outOfBound = [] (Engine::Point p) -> bool {
-		return p.x < 0
-			|| p.x >= PlayScene::MapWidth
-			|| p.y < 0
-			|| p.y >= PlayScene::MapHeight;
-	};
-	const Engine::Point directions[8] = {
-		Engine::Point(0, 1),
-		Engine::Point(1, 1),
-		Engine::Point(1, 0),
-		Engine::Point(1, -1),
-		Engine::Point(0, -1),
-		Engine::Point(-1, -1),
-		Engine::Point(-1, 0),
-		Engine::Point(-1, 1),
-	};
+    auto outOfBound = [] (Engine::Point p) -> bool {
+        return p.x < 0
+            || p.x >= PlayScene::MapWidth
+            || p.y < 0
+            || p.y >= PlayScene::MapHeight;
+    };
+    const Engine::Point directions[8] = {
+        Engine::Point(0, 1),
+        Engine::Point(1, 1),
+        Engine::Point(1, 0),
+        Engine::Point(1, -1),
+        Engine::Point(0, -1),
+        Engine::Point(-1, -1),
+        Engine::Point(-1, 0),
+        Engine::Point(-1, 1),
+    };
     const Engine::Point selfAt = Engine::Point(
-		(int)this->Position.x / PlayScene::BlockSize,
-		(int)this->Position.y / PlayScene::BlockSize
-	);
+        (int)this->Position.x / PlayScene::BlockSize,
+        (int)this->Position.y / PlayScene::BlockSize
+    );
     for (auto& direction : directions) {
         const Engine::Point updatePoint = selfAt + direction;
         if (outOfBound(updatePoint))
-			continue;
-		if (getPlayScene()->TryRemoveOneTurret(updatePoint))
-			getPlayScene()->EffectGroup->AddNewObject(new ExplosionEffect(
-				updatePoint.x * PlayScene::BlockSize + PlayScene::BlockSize / 2,
-				updatePoint.y * PlayScene::BlockSize + PlayScene::BlockSize / 2
-			));
+            continue;
+        if (getPlayScene()->TryRemoveOneTurret(updatePoint))
+            getPlayScene()->EffectGroup->AddNewObject(new ExplosionEffect(
+                updatePoint.x * PlayScene::BlockSize + PlayScene::BlockSize / 2,
+                updatePoint.y * PlayScene::BlockSize + PlayScene::BlockSize / 2
+            ));
     }
-	// Add explosion effect about Creeper
-	Enemy::OnExplode();
+    // Add explosion effect about Creeper
+    Enemy::OnExplode();
 }
 
 void CreeperEnemy::Update(float deltaTime) {
-	Enemy::Update(deltaTime);
+    Enemy::Update(deltaTime);
     Rotation = ALLEGRO_PI * 1.5 + atan2(Velocity.y, Velocity.x);
 }

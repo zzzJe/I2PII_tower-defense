@@ -55,8 +55,8 @@ void ScoreboardScene::Initialize() {
             std::getline(fin, date, '\n');
             if (fin.eof())
                 break;
-		    this->HighscoreData.push_back(std::tuple<int, std::string, std::string, std::string>(mapId, name, score, date));
-	    }
+            this->HighscoreData.push_back(std::tuple<int, std::string, std::string, std::string>(mapId, name, score, date));
+        }
         fin.close();
     }
     this->TotalPageNumbers = (this->HighscoreData.size() - 1) / this->RowNumbers + 1;

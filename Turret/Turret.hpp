@@ -28,6 +28,6 @@ public:
     Turret(std::string imgBase, std::string imgTurret, float x, float y, float radius, int price, float coolDown);
     void Update(float deltaTime) override;
     void Draw() const override;
-	int GetPrice() const;
+    int GetPrice() const;
 };
 #endif // TURRET_HPP

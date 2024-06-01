@@ -4,8 +4,8 @@
 
 class ArmoredVehicleGreen : public Enemy {
 public:
-	static const int Reward = 30;
-	ArmoredVehicleGreen(int x, int y);
+    static const int Reward = 30;
+    ArmoredVehicleGreen(int x, int y);
     void Update(float deltaTime) override;
 };
 #endif

@@ -9,11 +9,11 @@ void Tool::Update(float deltaTime) {}
 void Tool::CreateBullet() {}
 void Tool::Draw() const {
     if (Preview) {
-		al_draw_filled_circle(Position.x, Position.y, CollisionRadius, al_map_rgba(0, 255, 0, 50));
-	}
-	Sprite::Draw();
-	if (PlayScene::DebugMode) {
-		// Draw target radius.
-		al_draw_circle(Position.x, Position.y, CollisionRadius, al_map_rgb(0, 0, 255), 2);
-	}
+        al_draw_filled_circle(Position.x, Position.y, CollisionRadius, al_map_rgba(0, 255, 0, 50));
+    }
+    Sprite::Draw();
+    if (PlayScene::DebugMode) {
+        // Draw target radius.
+        al_draw_circle(Position.x, Position.y, CollisionRadius, al_map_rgb(0, 0, 255), 2);
+    }
 }

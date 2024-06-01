@@ -8,9 +8,9 @@ class FlameThrowerTurret: public Turret {
 private:
     Engine::Sprite Flame;
 public:
-	static const int Price;
+    static const int Price;
     FlameThrowerTurret(float x, float y);
-	void CreateBullet() override;
+    void CreateBullet() override;
     void Update(float deltaTime) override;
     void Draw() const override;
 };

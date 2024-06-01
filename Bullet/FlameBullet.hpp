@@ -16,13 +16,13 @@ struct Point;
 
 class FlameBullet : public Bullet {
 private:
-	int RemainTicks;
+    int RemainTicks;
 protected:
-	const float rotateRadian = 2 * ALLEGRO_PI;
+    const float rotateRadian = 2 * ALLEGRO_PI;
 public:
-	explicit FlameBullet(Engine::Point position, Engine::Point forwardDirection, float rotation, Turret* parent, double duration);
-	void OnExplode(Enemy* enemy) override;
-	void Update(float deltaTime) override;
-	void Draw() const override;
+    explicit FlameBullet(Engine::Point position, Engine::Point forwardDirection, float rotation, Turret* parent, double duration);
+    void OnExplode(Enemy* enemy) override;
+    void Update(float deltaTime) override;
+    void Draw() const override;
 };
 #endif

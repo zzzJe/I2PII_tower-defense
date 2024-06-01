@@ -4,8 +4,8 @@
 
 class MachineGunTurret: public Turret {
 public:
-	static const int Price;
+    static const int Price;
     MachineGunTurret(float x, float y);
-	void CreateBullet() override;
+    void CreateBullet() override;
 };
 #endif // MACHINEGUNTURRET_HPP

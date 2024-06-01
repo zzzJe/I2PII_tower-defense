@@ -19,9 +19,9 @@ FlameBullet::FlameBullet(Engine::Point position, Engine::Point forwardDirection,
 
 void FlameBullet::OnExplode(Enemy* enemy) {
     std::random_device dev;
-	std::mt19937 rng(dev());
-	std::uniform_int_distribution<std::mt19937::result_type> dist(0, 1);
-	getPlayScene()->EffectGroup->AddNewObject(new DirtyEffect("play/flame.png", dist(rng), enemy->Position.x, enemy->Position.y));
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, 1);
+    getPlayScene()->EffectGroup->AddNewObject(new DirtyEffect("play/flame.png", dist(rng), enemy->Position.x, enemy->Position.y));
 }
 
 void FlameBullet::Update(float deltaTime) {
@@ -35,5 +35,5 @@ void FlameBullet::Update(float deltaTime) {
 
 void FlameBullet::Draw() const {
     al_draw_tinted_scaled_rotated_bitmap(bmp.get(), Tint, Anchor.x * GetBitmapWidth(), Anchor.y * GetBitmapHeight(),
-			Position.x, Position.y, Size.x / GetBitmapWidth() * 3, Size.y / GetBitmapHeight() * 3, Rotation, 0);
+            Position.x, Position.y, Size.x / GetBitmapWidth() * 3, Size.y / GetBitmapHeight() * 3, Rotation, 0);
 }

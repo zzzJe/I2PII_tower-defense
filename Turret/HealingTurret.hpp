@@ -5,8 +5,8 @@
 
 class HealingTurret: public Turret {
 public:
-	static const int Price;
+    static const int Price;
     HealingTurret(float x, float y);
-	void CreateBullet() override;
+    void CreateBullet() override;
 };
 #endif

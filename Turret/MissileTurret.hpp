@@ -4,7 +4,7 @@
 
 class MissileTurret: public Turret {
 public:
-	static const int Price;
+    static const int Price;
     MissileTurret(float x, float y);
     void CreateBullet() override;
 };
