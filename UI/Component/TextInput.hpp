@@ -21,6 +21,8 @@ namespace Engine {
         ALLEGRO_COLOR BackgroundColor;
         ALLEGRO_COLOR BorderColor;
         ALLEGRO_COLOR InvalidColor;
+        ALLEGRO_COLOR EditingColor;
+        bool Editing;
         bool InvalidDisplay;
         bool Used;
     public:
@@ -31,7 +33,8 @@ namespace Engine {
             ALLEGRO_COLOR textColor = (ALLEGRO_COLOR){.r = 0, .g = 0, .b = 0, .a = 1},
             ALLEGRO_COLOR backgroundColor = (ALLEGRO_COLOR){.r = 1, .g = 1, .b = 1, .a = 1},
             ALLEGRO_COLOR borderColor = (ALLEGRO_COLOR){.r = 0, .g = 1, .b = 0, .a = 1},
-            ALLEGRO_COLOR invalidColor = (ALLEGRO_COLOR){.r = 1, .g = .5, .b = .5, .a = 1}
+            ALLEGRO_COLOR invalidColor = (ALLEGRO_COLOR){.r = 1, .g = .5, .b = .5, .a = 1},
+            ALLEGRO_COLOR editingColor = (ALLEGRO_COLOR){.r = .4, .g = .6, .b = 1, .a = 1}
         );
         float GetFullWidth();
         float GetFullHeight();
@@ -44,6 +47,7 @@ namespace Engine {
         void Backspace(std::size_t length = 1);
         void Clear();
         void Replace(std::string text);
+        void OnMouseDown(int button, int mx, int my) override;
         void OnKeyDown(int keyCode) override;
         bool IsInvalidDisplay() const;
         bool IsInvalidContent() const;

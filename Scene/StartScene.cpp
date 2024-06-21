@@ -15,7 +15,6 @@
 #include "PlayScene.hpp"
 #include "Engine/Point.hpp"
 #include "Engine/Resources.hpp"
-#include "UI/Component/Slider.hpp"
 #include "Scene/StartScene.hpp"
 
 void StartScene::Initialize() {

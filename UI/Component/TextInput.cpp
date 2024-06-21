@@ -1,7 +1,9 @@
 #include <allegro5/allegro.h>
 #include <allegro5/keyboard.h>
 #include <allegro5/allegro_primitives.h>
-#include "TextInput.hpp"
+#include "Engine/Collider.hpp"
+#include "Engine/Point.hpp"
+#include "UI/Component/TextInput.hpp"
 
 Engine::TextInput::TextInput(
     const std::string& data, const std::string& font, int maxLength,
@@ -10,7 +12,8 @@ Engine::TextInput::TextInput(
     ALLEGRO_COLOR textColor,
     ALLEGRO_COLOR backgroundColor,
     ALLEGRO_COLOR borderColor,
-    ALLEGRO_COLOR invalidColor
+    ALLEGRO_COLOR invalidColor,
+    ALLEGRO_COLOR editingColor
 ):
     Label(data, font, height * 0.9, x, y, textColor.r, textColor.g, textColor.b, textColor.a, anchorX, anchorY),
     MaxLength(maxLength),
@@ -22,8 +25,10 @@ Engine::TextInput::TextInput(
     BackgroundColor(backgroundColor),
     BorderColor(borderColor),
     InvalidColor(invalidColor),
+    EditingColor(editingColor),
     InvalidDisplay(false),
-    Used(false)
+    Used(false),
+    Editing(false)
 {}
 
 float Engine::TextInput::GetFullWidth() {
@@ -53,6 +58,8 @@ void Engine::TextInput::Draw() const {
     );
     const ALLEGRO_COLOR& borderDisplayColor = this->IsInvalidDisplay()
         ? this->InvalidColor
+        : this->Editing
+        ? this->EditingColor
         : this->BorderColor;
     if (this->RoundCorner) {
         al_draw_line(
@@ -155,7 +162,9 @@ void Engine::TextInput::Update(int keycode) {
     auto is_valid_inputcode = [] (int keycode) {
         return keycode >= ALLEGRO_KEY_A && keycode <= ALLEGRO_KEY_PAD_9
             || keycode == ALLEGRO_KEY_MINUS
-            || keycode == ALLEGRO_KEY_PAD_MINUS;
+            || keycode == ALLEGRO_KEY_PAD_MINUS
+            || keycode == ALLEGRO_KEY_FULLSTOP
+            || keycode == ALLEGRO_KEY_PAD_DELETE;
     };
     if (!is_valid_inputcode(keycode))
         return;
@@ -171,6 +180,8 @@ void Engine::TextInput::Update(int keycode) {
             return '0' + keycode - ALLEGRO_KEY_PAD_0;
         if (keycode >= ALLEGRO_KEY_A && keycode <= ALLEGRO_KEY_Z)
             return (shift_pressed ? 'A' : 'a') + keycode - ALLEGRO_KEY_A;
+        if (keycode == ALLEGRO_KEY_FULLSTOP || keycode == ALLEGRO_KEY_PAD_DELETE)
+            return '.';
         return '?';
     };
     return this->Update(char_mapping(keycode));
@@ -203,13 +214,33 @@ void Engine::TextInput::Replace(std::string text) {
     this->Text = text;
 }
 
+void Engine::TextInput::OnMouseDown(int button, int mx, int my) {
+    this->Editing = Engine::Collider::IsPointInRect(
+        Engine::Point(mx, my),
+        Engine::Point(
+            this->Position.x + this->BorderWidth - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
+            this->Position.y + this->BorderWidth - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth)
+        ),
+        Engine::Point(
+            this->Width + this->Margin * 2,
+            this->Height + this->Margin * 2
+        )
+    );
+    if (this->Editing)
+        this->InvalidDisplay = false;
+}
+
 void Engine::TextInput::OnKeyDown(int keyCode) {
-    if (this->Used)
+    if (this->Used || !this->Editing)
         return;
+    if (keyCode == ALLEGRO_KEY_ENTER || keyCode == ALLEGRO_KEY_PAD_ENTER) {
+        this->Editing = false;
+        return;
+    }
     if (keyCode == ALLEGRO_KEY_BACKSPACE) {
         this->Backspace();
-        this->InvalidDisplay = this->Text.empty();
-    } else if (this->MaxLength > this->Text.length()) {
+        this->InvalidDisplay = false;
+    } else if (this->MaxLength != this->Text.length()) {
         this->Update(keyCode);
         this->InvalidDisplay = false;
     } else {
