@@ -10,6 +10,7 @@
 #include "Scene/StartScene.hpp"
 #include "Scene/SettingsScene.hpp"
 #include "Scene/ScoreboardScene.hpp"
+#include "Scene/DummyScene.hpp"
 
 int main(int argc, char **argv) {
     Engine::LOG::SetConfig(true);
@@ -23,9 +24,11 @@ int main(int argc, char **argv) {
     game.AddNewScene("play", new PlayScene());
     game.AddNewScene("lose-scene", new LoseScene());
     game.AddNewScene("win-scene", new WinScene());
+    game.AddNewScene("dummy", new DummyScene());
 
     // DONE: [HACKATHON-1-SCENE] (4/4): Change the start scene
-    game.Start("start-scene", 60, 1600, 832);
+    game.Start("dummy", 60, 1600, 832);
+    // game.Start("start-scene", 60, 1600, 832);
     // game.Start("stage-select", 60, 1600, 832);
     // game.Start("settings", 60, 1600, 832);
     return 0;

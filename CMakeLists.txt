@@ -112,6 +112,10 @@ add_executable(2024_I2P2_TowerDefense_with_answer
         Scene/ScoreboardScene.hpp
         UI/Component/TextInput.cpp
         UI/Component/TextInput.hpp
+        UI/Component/ChatRoom.cpp
+        UI/Component/ChatRoom.hpp
+        Scene/DummyScene.cpp
+        Scene/DummyScene.hpp
 )
 
 IF (WIN32)
