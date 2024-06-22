@@ -7,8 +7,8 @@
 
 Engine::TextInput::TextInput(
     const std::string& data, const std::string& font, int maxLength,
-    float x, float y, float width, float height,
-    bool roundCorner, float margin, float borderWidth, float anchorX, float anchorY,
+    float x, float y, float width, float height, float fontShiftRatio,
+    bool allowWhiteSpace, bool roundCorner, float margin, float borderWidth, float anchorX, float anchorY,
     ALLEGRO_COLOR textColor,
     ALLEGRO_COLOR backgroundColor,
     ALLEGRO_COLOR borderColor,
@@ -21,6 +21,7 @@ Engine::TextInput::TextInput(
     Height(height),
     Margin(margin),
     BorderWidth(borderWidth),
+    FontShiftRatio(fontShiftRatio),
     RoundCorner(roundCorner),
     BackgroundColor(backgroundColor),
     BorderColor(borderColor),
@@ -28,7 +29,8 @@ Engine::TextInput::TextInput(
     EditingColor(editingColor),
     InvalidDisplay(false),
     Used(false),
-    Editing(false)
+    Editing(false),
+    AllowWhiteSpace(allowWhiteSpace)
 {}
 
 float Engine::TextInput::GetFullWidth() {
@@ -138,7 +140,7 @@ void Engine::TextInput::Draw() const {
                 this->font.get(),
                 this->Color,
                 this->Position.x + this->BorderWidth + this->Margin + this->Width - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
-                this->Position.y + this->BorderWidth + this->Margin - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
+                this->Position.y + this->BorderWidth + this->Margin - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth) + this->Height * this->FontShiftRatio,
                 ALLEGRO_ALIGN_RIGHT,
                 to_display_text.c_str()
             );
@@ -149,7 +151,7 @@ void Engine::TextInput::Draw() const {
             this->font.get(),
             this->Color,
             this->Position.x + this->BorderWidth + this->Margin - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
-            this->Position.y + this->BorderWidth + this->Margin - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
+            this->Position.y + this->BorderWidth + this->Margin - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth) + this->Height * this->FontShiftRatio,
             ALLEGRO_ALIGN_LEFT,
             this->Text.c_str()
         );
@@ -159,12 +161,13 @@ void Engine::TextInput::Draw() const {
 void Engine::TextInput::Update(int keycode) {
     if (keycode == ALLEGRO_KEY_BACKSPACE)
         return this->Backspace();
-    auto is_valid_inputcode = [] (int keycode) {
+    auto is_valid_inputcode = [=] (int keycode) {
         return keycode >= ALLEGRO_KEY_A && keycode <= ALLEGRO_KEY_PAD_9
             || keycode == ALLEGRO_KEY_MINUS
             || keycode == ALLEGRO_KEY_PAD_MINUS
             || keycode == ALLEGRO_KEY_FULLSTOP
-            || keycode == ALLEGRO_KEY_PAD_DELETE;
+            || keycode == ALLEGRO_KEY_PAD_DELETE
+            || AllowWhiteSpace && keycode == ALLEGRO_KEY_SPACE;
     };
     if (!is_valid_inputcode(keycode))
         return;
@@ -182,6 +185,8 @@ void Engine::TextInput::Update(int keycode) {
             return (shift_pressed ? 'A' : 'a') + keycode - ALLEGRO_KEY_A;
         if (keycode == ALLEGRO_KEY_FULLSTOP || keycode == ALLEGRO_KEY_PAD_DELETE)
             return '.';
+        if (keycode == ALLEGRO_KEY_SPACE)
+            return ' ';
         return '?';
     };
     return this->Update(char_mapping(keycode));
@@ -246,6 +251,10 @@ void Engine::TextInput::OnKeyDown(int keyCode) {
     } else {
         this->InvalidDisplay = true;
     }
+}
+
+void Engine::TextInput::Focus(bool state) {
+    this->Editing = state;
 }
 
 bool Engine::TextInput::IsInvalidContent() const {

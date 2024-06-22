@@ -31,7 +31,7 @@ void WinScene::Initialize() {
     btn->SetOnClickCallback(std::bind(&WinScene::BackOnClick, this, 2));
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label("Back", "pirulen.ttf", 48, halfW, halfH * 7 / 4, 0, 0, 0, 255, 0.5, 0.5));
-    Engine::TextInput* input = new Engine::TextInput("nam", "pirulen.ttf", 10, halfW * 1.4, halfH, 500, 60, true, 3, 10, 0.5, 0.5, {32, 32, 32, 255}, {1, 1, 1, 1}, {0.5, 0.5, 0.5, 1});
+    Engine::TextInput* input = new Engine::TextInput("nam", "pirulen.ttf", 10, halfW * 1.4, halfH, 500, 60, 0, false, true, 3, 10, 0.5, 0.5, {32, 32, 32, 255}, {1, 1, 1, 1}, {0.5, 0.5, 0.5, 1});
     AddNewObject(new Engine::Label("Input name:", "pirulen.ttf", 40, halfW * 1.4 - input->GetWidth() / 2, halfH - input->GetFullHeight(), 255, 255, 255, 255, 0, 0));
     AddNewControlObject(input);
     Engine::ImageButton* saveBtn = new Engine::ImageButton("win/dirt.png", "win/floor.png", halfW * 1.4 - input->GetWidth() / 2, halfH + input->GetFullHeight() * .75, 200, 50);
