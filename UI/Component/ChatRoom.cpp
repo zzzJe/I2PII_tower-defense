@@ -8,6 +8,7 @@
 #include "Engine/Point.hpp"
 #include "Engine/Resources.hpp"
 #include "Engine/GameEngine.hpp"
+#include "Engine/LOG.hpp"
 
 Engine::ChatRoom::ChatRoom(
     float x, float y, float w, float h, float anchorX, float anchorY,
@@ -81,8 +82,14 @@ void Engine::ChatRoom::Draw() const {
     al_draw_filled_rectangle(Position.x + Size.x, 0, Position.x + Size.x, h, CoverageColor);
 }
 
-void Engine::ChatRoom::Append(std::string name, std::string message) {
-    Engine::Message msg = Engine::Message(Position.x + MarginLeft, 0, 0, 0, Size.x - MarginLeft - MarginRight, Position.y + Size.y - MarginBottom, Position.y + MarginTop, UsernameFont, UsernameFontSize, ContentFont, ContentFontSize, name, message);
+void Engine::ChatRoom::Append(std::string name, std::string message, MessageType type, Engine::Point imageSize, float imageDisplayRatio) {
+    Engine::Message msg = Engine::Message(
+        Position.x + MarginLeft, 0, 0, 0,
+        Size.x - MarginLeft - MarginRight, Position.y + Size.y - MarginBottom, Position.y + MarginTop,
+        UsernameFont, UsernameFontSize, ContentFont, ContentFontSize,
+        name, message, type,
+        imageSize.x, imageSize.y, imageDisplayRatio
+    );
     IncomingMessages.push(msg);
     // AllMessages.push_back(msg);
 }
@@ -122,7 +129,7 @@ void Engine::ChatRoom::OnMouseScroll(int mx, int my, int delta) {
 Engine::Message::Message(
     float x, float y, float anchorX, float anchorY, float maxDisplayWidth, float maxYAxis, float minYAxis,
     std::string usernameFont, int usernameFontSize, std::string contentFont, int contentFontSize, 
-    std::string name, std::string content, MessageType type,
+    std::string name, std::string content, MessageType type, int imageWidth, int imageHeight, float imageDisplayRatio,
     ALLEGRO_COLOR usernameColor,
     ALLEGRO_COLOR contentColor
 ):
@@ -137,12 +144,62 @@ Engine::Message::Message(
     UsernameColor(usernameColor),
     ContentColor(contentColor),
     UsernameFont(Resources::GetInstance().GetFont(usernameFont, usernameFontSize)),
-    ContentFont(Resources::GetInstance().GetFont(contentFont, contentFontSize))
+    ContentFont(Resources::GetInstance().GetFont(contentFont, contentFontSize)),
+    ImageDisplay(nullptr),
+    ImageBitmapSize(Engine::Point(imageWidth, imageHeight)),
+    ImageDisplaySize(Engine::Point(imageWidth * imageDisplayRatio, imageHeight * imageDisplayRatio)),
+    ImageDisplayRatio(imageDisplayRatio)
 {
     UpdateDisplayContent();
 }
 
 void Engine::Message::UpdateDisplayContent() {
+    if (Type == MessageType::Image) {
+        auto map_char_to_colorcode = [](unsigned char c) -> int {
+            switch (c) {
+                case '0':
+                    return 0xFFFFFF;
+                case '1':
+                    return 0x000000;
+                case '2':
+                    return 0x0000FF;
+                case '3':
+                    return 0x00FF00;
+                case '4':
+                    return 0xFF0000;
+                default:
+                    return 0x000000;
+            }
+        };
+
+        if (ImageDisplay == nullptr)
+            al_destroy_bitmap(ImageDisplay);
+        ImageDisplay = al_create_bitmap(ImageBitmapSize.x, ImageBitmapSize.y);
+        ALLEGRO_LOCKED_REGION* locked = al_lock_bitmap(ImageDisplay, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE);
+        if (!locked) {
+            LOG(LogType::ERROR) << "Failed to lock bitmap for bucket fill!";
+            return;
+        }
+        unsigned char* data = static_cast<unsigned char*>(locked->data);
+        const int pitch = locked->pitch;
+        const int pixel_size = al_get_pixel_size(locked->format);
+        for (int y = 0; y < ImageBitmapSize.y; y++) {
+            unsigned char* row = data + y * pitch;
+            for (int x = 0; x < ImageBitmapSize.x; x++) {
+                unsigned char* pixel = row + x * pixel_size;
+                char encoded_color = Content[ImageBitmapSize.x * y + x];
+                // Mapping colors to characters as per the rules
+                int decoded_colorcode = map_char_to_colorcode(encoded_color);
+                pixel[0] = (decoded_colorcode >> 16) & (0xFF);
+                pixel[1] = (decoded_colorcode >>  8) & (0xFF);
+                pixel[2] = (decoded_colorcode >>  0) & (0xFF);
+                pixel[3] = 0xFF;
+            }
+        }
+        al_unlock_bitmap(ImageDisplay);
+        return;
+    }
+    // Type == MessageType::PlainText
     DisplayContent.clear();
     std::stringstream ss(Content);
     std::string element;
@@ -203,6 +260,12 @@ void Engine::Message::UpdateDisplayContent() {
 }
 
 Engine::Point Engine::Message::CalculateSize() const {
+    if (Type == MessageType::Image) {
+        return Engine::Point(
+            std::max(al_get_text_width(UsernameFont.get(), Name.c_str()), static_cast<int>(ImageDisplaySize.x)),
+            al_get_font_line_height(UsernameFont.get()) + ImageDisplaySize.y + /* magic number */ 10
+        );
+    }
     int max_curr_width = 0;
     for (const std::string& content : DisplayContent)
         max_curr_width = std::max(max_curr_width, al_get_text_width(ContentFont.get(), content.c_str()));
@@ -216,6 +279,7 @@ void Engine::Message::Draw() const {
     int username_height = al_get_font_line_height(UsernameFont.get());
     int content_height = al_get_font_line_height(ContentFont.get());
     
+    // draw Username
     if (!(
         Position.y + username_height < MinYAxis
      || Position.y > MaxYAxis
@@ -223,18 +287,36 @@ void Engine::Message::Draw() const {
         al_draw_text(UsernameFont.get(), UsernameColor, Position.x, Position.y, ALLEGRO_ALIGN_LEFT, Name.c_str());
     }
     
-    int shift = 0;
-    for (const std::string& content : DisplayContent) {
-        int upper = Position.y + username_height + content_height * shift;
-        int lower = Position.y + username_height + content_height * (shift + 1);
-        shift++;
+    // draw Content
+    if (Type == MessageType::PlainText) {
+        int shift = 0;
+        for (const std::string& content : DisplayContent) {
+            int upper = Position.y + username_height + content_height * shift;
+            int lower = Position.y + username_height + content_height * (shift + 1);
+            shift++;
+            if (upper > MaxYAxis)
+                continue;
+            if (lower < MinYAxis)
+                continue;
+            al_draw_text(
+                ContentFont.get(),
+                ContentColor, Position.x, Position.y + username_height + content_height * (shift - 1), ALLEGRO_ALIGN_LEFT, content.c_str()
+            );
+        }
+    } else {
+        int upper = Position.y + username_height;
+        int lower = Position.y + username_height + ImageDisplaySize.y;
         if (upper > MaxYAxis)
-            continue;
+            return;
         if (lower < MinYAxis)
-            continue;
-        al_draw_text(
-            ContentFont.get(),
-            ContentColor, Position.x, Position.y + username_height + content_height * (shift - 1) , ALLEGRO_ALIGN_LEFT, content.c_str()
+            return;
+        // al_draw_filled_circle(Position.x, Position.y + username_height, 5, {1, 1, 0, 1});
+        // al_draw_filled_circle(Position.x + ImageDisplaySize.x, Position.y + username_height + ImageDisplaySize.y, 5, {1, 1, 0, 1});
+        al_draw_scaled_bitmap(
+            ImageDisplay,
+            0, 0, al_get_bitmap_width(ImageDisplay), al_get_bitmap_height(ImageDisplay),
+            Position.x, Position.y + username_height, ImageDisplaySize.x, ImageDisplaySize.y,
+            ALLEGRO_ALIGN_LEFT
         );
     }
 }

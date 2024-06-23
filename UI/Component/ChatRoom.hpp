@@ -11,6 +11,7 @@
 #include <allegro5/color.h>
 #include "Engine/IObject.hpp"
 #include "Engine/IControl.hpp"
+#include "Engine/Point.hpp"
 
 namespace Engine {
     class Message; // for scope recognition
@@ -31,6 +32,10 @@ namespace Engine {
         std::string Name;
         std::string Content;
         std::list<std::string> DisplayContent;
+        ALLEGRO_BITMAP* ImageDisplay;
+        Engine::Point ImageDisplaySize;
+        Engine::Point ImageBitmapSize;
+        float ImageDisplayRatio;
         MessageType Type;
         ALLEGRO_COLOR UsernameColor;
         ALLEGRO_COLOR ContentColor;
@@ -41,9 +46,9 @@ namespace Engine {
         Message(
             float x, float y, float anchorX, float anchorY, float maxDisplayWidth, float maxYAxis, float minYAxis,
             std::string usernameFont, int usernameFontSize, std::string contentFont, int contentFontSize, 
-            std::string name, std::string content, MessageType type = PlainText,
-            ALLEGRO_COLOR usernameColor = (ALLEGRO_COLOR){0.6, 0.6, 0.8, 1},
-            ALLEGRO_COLOR contentColor = (ALLEGRO_COLOR){1, 1, 1, 1}
+            std::string name, std::string content, MessageType type = PlainText, int imageWidth = 600, int imageHeight = 400, float imageDisplayRatio = .5,
+            ALLEGRO_COLOR usernameColor = {0.6, 0.6, 0.8, 1},
+            ALLEGRO_COLOR contentColor = {1, 1, 1, 1}
         );
         void UpdateDisplayContent();
         Engine::Point CalculateSize() const;
@@ -81,13 +86,13 @@ namespace Engine {
             float marginTop, float marginBottom, float marginLeft, float marginRight,
             int scrollScale,
             std::string usenameFont, int usernameFontSize, std::string contentFont, int contentFontSize, 
-            ALLEGRO_COLOR backgroundColor = (ALLEGRO_COLOR){0.153, 0.153, 0.153, 1},
-            ALLEGRO_COLOR coverageColor = (ALLEGRO_COLOR){0, 0, 0, 1},
-            ALLEGRO_COLOR usernameFontColor = (ALLEGRO_COLOR){0.6, 0.6, 0.8, 1},
-            ALLEGRO_COLOR contentFontColor = (ALLEGRO_COLOR){1, 1, 1, 1}
+            ALLEGRO_COLOR backgroundColor = {0.153, 0.153, 0.153, 1},
+            ALLEGRO_COLOR coverageColor = {0, 0, 0, 1},
+            ALLEGRO_COLOR usernameFontColor = {0.6, 0.6, 0.8, 1},
+            ALLEGRO_COLOR contentFontColor = {1, 1, 1, 1}
         );
         ~ChatRoom() = default;
-        void Append(std::string name, std::string message);
+        void Append(std::string name, std::string message, MessageType type, Engine::Point imageSize = Engine::Point(0, 0), float imageDisplayRatio = .5);
         void UpdateView(int deltaY);
         void Draw() const override;
         void ToggleEnable(bool status = true);
