@@ -225,7 +225,7 @@ void Engine::TextInput::Replace(std::string text) {
 
 void Engine::TextInput::OnMouseDown(int button, int mx, int my) {
     if (!Enable)
-        true;
+        return;
     this->Editing = Engine::Collider::IsPointInRect(
         Engine::Point(mx, my),
         Engine::Point(
