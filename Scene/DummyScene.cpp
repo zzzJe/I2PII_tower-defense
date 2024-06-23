@@ -14,7 +14,7 @@ void DummyScene::Initialize() {
 
     // AddNewObject(new Engine::Label("Dummy Scene", "pirulen.ttf", 48, halfW, 50, 255, 255, 255, 255, 0.5, 0.5));
     AddNewControlObject(this->room = new Engine::ChatRoom(
-        150, 50, w - 300, h - 200, 0, 0, 10, 30, 10, 10, "Consolas.ttf", 24, "Consolas.ttf", 30
+        150, 50, w - 300, h - 200, 0, 0, 10, 30, 10, 10, 5, "Consolas.ttf", 24, "Consolas.ttf", 30
     ));
     AddNewControlObject(this->input = new Engine::TextInput("", "Consolas.ttf", -1, halfW, h - 100, 900, 60, 0.1, true, false, 3, 5, 0.5, 0.5, {32, 32, 32, 255}, {1, 1, 1, 1}, {0.5, 0.5, 0.5, 1}));
 }
@@ -40,4 +40,12 @@ void DummyScene::OnKeyDown(int keyCode) {
         }
         this->input->Clear();
     }
+    if (keyCode == ALLEGRO_KEY_5)
+        this->room->ToggleEnable(false);
+    if (keyCode == ALLEGRO_KEY_6)
+        this->room->ToggleEnable(true);
+    if (keyCode == ALLEGRO_KEY_7)
+        this->room->ToggleVisible(false);
+    if (keyCode == ALLEGRO_KEY_8)
+        this->room->ToggleVisible(true);
 }

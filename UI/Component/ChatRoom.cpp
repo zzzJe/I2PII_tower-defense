@@ -1,5 +1,6 @@
 #include <vector>
 #include <deque>
+#include <queue>
 #include <sstream>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_font.h>
@@ -11,6 +12,7 @@
 Engine::ChatRoom::ChatRoom(
     float x, float y, float w, float h, float anchorX, float anchorY,
     float marginTop, float marginBottom, float marginLeft, float marginRight,
+    int scrollScale,
     std::string usernameFont, int usernameFontSize, std::string contentFont, int contentFontSize,
     ALLEGRO_COLOR backgroundColor,
     ALLEGRO_COLOR coverageColor,
@@ -27,12 +29,16 @@ Engine::ChatRoom::ChatRoom(
     UsernameFontColor(usernameFontColor),
     ContentFontColor(contentFontColor),
     AllMessages(std::vector<Message>()),
+    IncomingMessages(std::queue<Message>()),
     View(std::deque<std::vector<Message>::iterator>()),
     YOffset(0),
+    ScrollScale(scrollScale),
     MarginTop(marginTop),
     MarginBottom(marginBottom),
     MarginLeft(marginLeft),
-    MarginRight(marginRight)
+    MarginRight(marginRight),
+    Visible(true),
+    Enable(true)
 {
     std::shared_ptr<ALLEGRO_FONT> username_font = (Engine::Resources::GetInstance().GetFont(usernameFont, usernameFontSize));
     std::shared_ptr<ALLEGRO_FONT> content_font = (Engine::Resources::GetInstance().GetFont(contentFont, contentFontSize));
@@ -40,6 +46,10 @@ Engine::ChatRoom::ChatRoom(
 }
 
 void Engine::ChatRoom::Update(float deltaTime) {
+    while (!IncomingMessages.empty()) {
+        AllMessages.push_back(IncomingMessages.front());
+        IncomingMessages.pop();
+    }
     if (AllMessages.empty())
         return;
     int offset_acc = YOffset;
@@ -50,6 +60,8 @@ void Engine::ChatRoom::Update(float deltaTime) {
 }
 
 void Engine::ChatRoom::Draw() const {
+    if (!Visible)
+        return;
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     al_draw_filled_rectangle(Position.x, Position.y, Position.x + Size.x, Position.y + Size.y, BackgroundColor);
@@ -65,9 +77,8 @@ void Engine::ChatRoom::Draw() const {
 
 void Engine::ChatRoom::Append(std::string name, std::string message) {
     Engine::Message msg = Engine::Message(Position.x + MarginLeft, 0, 0, 0, Size.x - MarginLeft - MarginRight, Position.y + Size.y, Position.y, UsernameFont, UsernameFontSize, ContentFont, ContentFontSize, name, message);
-    AllMessages.push_back(msg);
-    // auto scroll
-    // if (View.)
+    IncomingMessages.push(msg);
+    // AllMessages.push_back(msg);
 }
 
 void Engine::ChatRoom::UpdateView(int deltaY) {
@@ -83,12 +94,23 @@ void Engine::ChatRoom::UpdateView(int deltaY) {
     YOffset += deltaY;
 }
 
+
+void Engine::ChatRoom::ToggleEnable(bool status) {
+    Enable = status;
+}
+
+void Engine::ChatRoom::ToggleVisible(bool status) {
+    Visible = status;
+}
+
 void Engine::ChatRoom::OnMouseDown(int button, int mx, int my) {}
 
 void Engine::ChatRoom::OnMouseUp(int button, int mx, int my) {}
 
 void Engine::ChatRoom::OnMouseScroll(int mx, int my, int delta) {
-    UpdateView(delta * 5);
+    if (!Enable)
+        return;
+    UpdateView(delta * ScrollScale);
 }
 
 Engine::Message::Message(
