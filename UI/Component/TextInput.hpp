@@ -23,6 +23,8 @@ namespace Engine {
         ALLEGRO_COLOR BorderColor;
         ALLEGRO_COLOR InvalidColor;
         ALLEGRO_COLOR EditingColor;
+        bool Enable;
+        bool Visible;
         bool Editing;
         bool InvalidDisplay;
         bool Used;
@@ -56,6 +58,8 @@ namespace Engine {
         bool IsInvalidContent() const;
         bool ConsumeSlot();
         bool IsConsumedSlot() const;
+        void ToggleEnable(bool status = true);
+        void ToggleVisible(bool status = true);
     };
 }
 

@@ -30,6 +30,8 @@ Engine::TextInput::TextInput(
     InvalidDisplay(false),
     Used(false),
     Editing(false),
+    Enable(true),
+    Visible(true),
     AllowWhiteSpace(allowWhiteSpace)
 {}
 
@@ -51,6 +53,8 @@ float Engine::TextInput::GetHeight() {
 
 
 void Engine::TextInput::Draw() const {
+    if (!Visible)
+        return;
     al_draw_filled_rectangle(
         this->Position.x + this->BorderWidth - this->Anchor.x * (this->Width + this->Margin + this->BorderWidth),
         this->Position.y + this->BorderWidth - this->Anchor.y * (this->Height + this->Margin + this->BorderWidth),
@@ -220,6 +224,8 @@ void Engine::TextInput::Replace(std::string text) {
 }
 
 void Engine::TextInput::OnMouseDown(int button, int mx, int my) {
+    if (!Enable)
+        true;
     this->Editing = Engine::Collider::IsPointInRect(
         Engine::Point(mx, my),
         Engine::Point(
@@ -236,6 +242,8 @@ void Engine::TextInput::OnMouseDown(int button, int mx, int my) {
 }
 
 void Engine::TextInput::OnKeyDown(int keyCode) {
+    if (!Enable)
+        return;
     if (this->Used || !this->Editing)
         return;
     if (keyCode == ALLEGRO_KEY_ENTER || keyCode == ALLEGRO_KEY_PAD_ENTER) {
@@ -274,4 +282,12 @@ bool Engine::TextInput::ConsumeSlot() {
 
 bool Engine::TextInput::IsConsumedSlot() const {
     return this->Used;
+}
+
+void Engine::TextInput::ToggleEnable(bool status) {
+    this->Enable = status;
+}
+
+void Engine::TextInput::ToggleVisible(bool status) {
+    this->Visible = status;
 }

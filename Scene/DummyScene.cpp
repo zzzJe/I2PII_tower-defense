@@ -40,12 +40,16 @@ void DummyScene::OnKeyDown(int keyCode) {
         }
         this->input->Clear();
     }
-    if (keyCode == ALLEGRO_KEY_5)
-        this->room->ToggleEnable(false);
-    if (keyCode == ALLEGRO_KEY_6)
-        this->room->ToggleEnable(true);
     if (keyCode == ALLEGRO_KEY_7)
         this->room->ToggleVisible(false);
     if (keyCode == ALLEGRO_KEY_8)
         this->room->ToggleVisible(true);
+    if (keyCode == ALLEGRO_KEY_5)
+        this->input->ToggleEnable(false);
+    if (keyCode == ALLEGRO_KEY_6)
+        this->input->ToggleEnable(true);
+    if (keyCode == ALLEGRO_KEY_9)
+        this->input->ToggleVisible(false);
+    if (keyCode == ALLEGRO_KEY_0)
+        this->input->ToggleVisible(true);
 }
