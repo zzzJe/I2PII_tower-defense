@@ -54,7 +54,7 @@ void Engine::ChatRoom::Update(float deltaTime) {
         return;
     int offset_acc = YOffset;
     for (int i = AllMessages.size() - 1; i >= 0; i--) {
-        AllMessages[i].Position.y = Position.y + Size.y + offset_acc - AllMessages[i].CalculateSize().y;
+        AllMessages[i].Position.y = Position.y + Size.y + offset_acc - AllMessages[i].CalculateSize().y - MarginBottom;
         offset_acc -= AllMessages[i].CalculateSize().y;
     }
 }
@@ -69,6 +69,12 @@ void Engine::ChatRoom::Draw() const {
         return;
     for (const Engine::Message& mes : AllMessages)
         mes.Draw();
+    // for Margin
+    al_draw_filled_rectangle(Position.x, Position.y, Position.x + Size.x, Position.y + MarginTop, BackgroundColor);
+    al_draw_filled_rectangle(Position.x, Position.y, Position.x + MarginLeft, Position.y + Size.y, BackgroundColor);
+    al_draw_filled_rectangle(Position.x, Position.y + Size.y - MarginBottom, Position.x + Size.x, Position.y + Size.y, BackgroundColor);
+    al_draw_filled_rectangle(Position.x + Size.x - MarginRight, Position.y, Position.x + Size.x, Position.y + Size.y, BackgroundColor);
+    // for Outside
     al_draw_filled_rectangle(0, 0, w, Position.y, CoverageColor);
     al_draw_filled_rectangle(0, 0, Position.x, h, CoverageColor);
     al_draw_filled_rectangle(0, Position.y + Size.y, w, h, CoverageColor);
@@ -76,7 +82,7 @@ void Engine::ChatRoom::Draw() const {
 }
 
 void Engine::ChatRoom::Append(std::string name, std::string message) {
-    Engine::Message msg = Engine::Message(Position.x + MarginLeft, 0, 0, 0, Size.x - MarginLeft - MarginRight, Position.y + Size.y, Position.y, UsernameFont, UsernameFontSize, ContentFont, ContentFontSize, name, message);
+    Engine::Message msg = Engine::Message(Position.x + MarginLeft, 0, 0, 0, Size.x - MarginLeft - MarginRight, Position.y + Size.y - MarginBottom, Position.y + MarginTop, UsernameFont, UsernameFontSize, ContentFont, ContentFontSize, name, message);
     IncomingMessages.push(msg);
     // AllMessages.push_back(msg);
 }
@@ -85,9 +91,9 @@ void Engine::ChatRoom::UpdateView(int deltaY) {
     if (AllMessages.empty())
         return;
     int head_line = AllMessages.begin()->Position.y;
-    int lower_bound = Position.y;
+    int lower_bound = Position.y + MarginTop;
     int last_line = AllMessages.rbegin()->CalculateSize().y + AllMessages.rbegin()->Position.y;
-    int upper_bound = Position.y + Size.y;
+    int upper_bound = Position.y + Size.y - MarginBottom;
     if (deltaY < 0 && last_line < upper_bound
      || deltaY > 0 && head_line > lower_bound
     )   return;
