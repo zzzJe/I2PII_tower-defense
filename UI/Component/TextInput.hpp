@@ -34,11 +34,11 @@ namespace Engine {
             const std::string& data, const std::string& font, int maxLength,
             float x, float y, float width, float height, float fontShiftRatio,
             bool allowWhiteSpace = false, bool roundCorner = true, float margin = 0, float borderWidth = 10, float anchorX = 0, float anchorY = 0,
-            ALLEGRO_COLOR textColor = (ALLEGRO_COLOR){.r = 0, .g = 0, .b = 0, .a = 1},
-            ALLEGRO_COLOR backgroundColor = (ALLEGRO_COLOR){.r = 1, .g = 1, .b = 1, .a = 1},
-            ALLEGRO_COLOR borderColor = (ALLEGRO_COLOR){.r = 0, .g = 1, .b = 0, .a = 1},
-            ALLEGRO_COLOR invalidColor = (ALLEGRO_COLOR){.r = 1, .g = .5, .b = .5, .a = 1},
-            ALLEGRO_COLOR editingColor = (ALLEGRO_COLOR){.r = .4, .g = .6, .b = 1, .a = 1}
+            ALLEGRO_COLOR textColor       = {0, 0, 0, 1},
+            ALLEGRO_COLOR backgroundColor = {1, 1, 1, 1},
+            ALLEGRO_COLOR borderColor     = {0, 1, 0, 1},
+            ALLEGRO_COLOR invalidColor    = {1, .5, .5, 1},
+            ALLEGRO_COLOR editingColor    = {.4, .6, 1, 1}
         );
         float GetFullWidth();
         float GetFullHeight();
